@@ -2,18 +2,20 @@
 //
 
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <string>
 #include <cctype>
 #include "scanner.h"
+#include "parser.h"
 
 using namespace std;
 
-string sampleCode = "float int123 \n 123\n13void 1341234.234]n23 some shet ;\n + = - / { }\n [ ( ] >= <= !=)";
+string sampleCode = "var x : y";
 istream* input;
 int main()
 {
-	/*FILE* filePtr;
+	FILE* filePtr;
 	if ((filePtr = fopen("in.txt", "r")) == 0)
 	{
 		printf("cant find file");
@@ -21,8 +23,12 @@ int main()
 	else
 	{
 		printf("found file");
-	}*/
-	input = new istringstream(sampleCode);
+	}
+	input = new std::ifstream(filePtr);
+	//input = new istringstream(sampleCode);
+	displayStream(input);
+	input->clear();
+	input->seekg(0, std::ios::beg);
 	InitScanner();
 	Token token;
 	while ((token = Scan(input)).type != tkEOF) {
@@ -34,6 +40,11 @@ int main()
 			break;
 		}
 	}
+	printf("\n");
+
+	input->clear();
+	input->seekg(0, std::ios::beg);
+	Parse(input);
 	system("Pause");
     return 0;
 }

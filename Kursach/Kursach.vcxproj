@@ -145,11 +145,13 @@
     <ClCompile Include="Kursach.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="parser.cpp" />
     <ClCompile Include="scanner.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="parser.h" />
     <ClInclude Include="scanner.h" />
+    <ClInclude Include="strformat.h" />
     <ClInclude Include="symdef.h" />
     <ClInclude Include="token.h" />
   </ItemGroup>

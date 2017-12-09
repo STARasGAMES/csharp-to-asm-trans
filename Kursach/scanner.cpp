@@ -30,13 +30,18 @@ Token Scan(std::istream *filePtr) {
 			}
 			//fseek(filePtr, -1, SEEK_CUR);
 		}
+		while (ch == ' ' && (*filePtr).get(ch)) {
+			//printf("skip space at line #%d, cur char is '%c'\n", lineNum, ch);
+		}
+		
 		if (isalpha(ch)) {
 			do
 				word.push_back(ch);
 			while ((*filePtr).get(ch) && isalnum(ch));
+			(*filePtr).putback(ch);
 			token.str = word;
 			if (isKeyword(word) != -1) {
-				token.type = getTokenTypeByString(word);
+				token.type = GetTokenTypeByString(word);
 			}
 			else {
 				token.type = tkID;
@@ -64,6 +69,7 @@ Token Scan(std::istream *filePtr) {
 				}
 			}
 			while ((*filePtr).get(ch));
+			(*filePtr).putback(ch);
 			token.str = numStr;
 			token.type = tkNUMBER;
 			token.lineNum = lineNum;
@@ -74,13 +80,13 @@ Token Scan(std::istream *filePtr) {
 		}
 
 		if (ispunct(ch)) {
-			//printf("is punct %c \n", ch);
+			//printf("is punct '%c' \n", ch);
 			word.clear();
 			word = ch;
 
 			if (isDelimiter(word) != -1) {
 				token.str = ch;
-				token.type = getTokenTypeByString(token.str);
+				token.type = GetTokenTypeByString(token.str);
 				token.lineNum = lineNum;
 				return token;
 			}
@@ -93,7 +99,7 @@ Token Scan(std::istream *filePtr) {
 					//printf("is Relational operator %s \n", word.c_str());
 					token.lineNum = lineNum;
 					token.str = word;
-					token.type = getTokenTypeByString(token.str);
+					token.type = GetTokenTypeByString(token.str);
 					//printf("Relational operator type %d \n", token.type);
 					return token;
 				}
@@ -103,10 +109,10 @@ Token Scan(std::istream *filePtr) {
 			// operator
 			if (isOperator(word) != -1)
 			{
-				//printf("isOperator %c \n", ch);
+				//printf("isOperator '%c' \n", ch);
 				token.lineNum = lineNum;
 				token.str = word;
-				token.type = getTokenTypeByString(token.str);
+				token.type = GetTokenTypeByString(token.str);
 				return token;
 			}
 			token.lineNum = lineNum;
@@ -152,9 +158,7 @@ int isOperator(std::string str) {
 }
 
 
-TokenType getTokenTypeByString(const std::string word) {
-	return stringToTokenTypeMap[word];
-}
+
 // Besides English letters, and digits, these are extra acceptable characters
 int isExAcceptableChar(char c) {
 	if (c == '.' || c == '(' || c == ')' || c == ',' || c == '{' || c == '}' ||
@@ -183,6 +187,9 @@ std::string GetStringByTokenType(const TokenType type) {
 	case tkKeywordDO: 		result = "do [KEYWORD]"; break;
 	case tkKeywordVOID: 	result = "void [KEYWORD]"; break;
 	case tkKeywordRETURN: 	result = "return [KEYWORD]"; break;
+	case tkSTART: result = "start [KEYWORD]"; break;
+	case tkFINISH: result = "finish [KEYWORD]"; break;
+	case tkKeywordVAR: result = "var [KEYWORD]"; break;
 
 	case tkDelimiterDOT: 	result = "dot [DELIMITER]"; break;
 	case tkDelimiterLEFT_PA: 	result = "left-parenthesis [DELIMITER]"; break;
@@ -199,7 +206,8 @@ std::string GetStringByTokenType(const TokenType type) {
 	case tkOperatorSUBTRACT:	result = "subtractk [OTHER OPERATOR]"; break;
 	case tkOperatorMUL: 		result = "multiply [OTHER OPERATOR]"; break;
 	case tkOperatorDIV: 		result = "division [OTHER OPERATOR]"; break;
-	case tkOperatorMOD:	result = "remainder [OTHER OPERATOR]"; break;
+	case tkOperatorREMAINDER:	result = "remainder [OTHER OPERATOR]"; break;
+	case tkOperatorCOLON:	result = "colon [OTHER OPERATOR]"; break;
 
 	case tkOperatorEQUAL: 		result = "equal [RELATIONAL OPERATOR]"; break;
 	case tkOperatorNOT_EQUAL: 		result = "not equal [RELATIONAL OPERATOR]"; break;
@@ -216,7 +224,7 @@ std::string GetStringByTokenType(const TokenType type) {
 
 void printToken(Token token) {
 	if (token.type == tkEOF) {
-		printf("***** EOFtk ***** \n\n");
+		printf("***** tkEOF ***** \n\n");
 		return;
 	}
 	std::string out1 = "'" + token.str + "'";
@@ -224,7 +232,10 @@ void printToken(Token token) {
 		out1.c_str(), token.lineNum, GetStringByTokenType(token.type).c_str());
 }
 
-void displayStream(std::istream * filePtr) {
+TokenType GetTokenTypeByString(const std::string word) {
+	return stringToTokenTypeMap[word];
+}
+void displayStream(std::istream* filePtr) {
 	printf("\n-----Source file starts here-----\n\n");
 
 	char ch;

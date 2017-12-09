@@ -16,7 +16,7 @@ std::vector<std::string> delimiters;
 
 std::vector<TokenType> keywordsTokens = {
 	tkKeywordTHEN, tkKeywordIF, tkKeywordREPEAT, tkKeywordINT, tkKeywordFLOAT,
-	tkKeywordDO, tkKeywordVOID, tkKeywordRETURN, tkKeywordELSE
+	tkKeywordDO, tkKeywordVOID, tkKeywordRETURN, tkKeywordELSE, tkSTART, tkFINISH, tkKeywordVAR, tkKeywordPRINT
 };
 
 std::vector<TokenType> operatorsTokens = {
@@ -24,7 +24,7 @@ std::vector<TokenType> operatorsTokens = {
 	tkOperatorEQUAL, tkOperatorGREATER, tkOperatorLESS, tkOperatorGREATER_EQUAL, tkOperatorLESS_EQUAL,
 
 	// Other operators (= :  +  -  *  / %)
-	tkOperatorASSIGN, tkOperatorADD, tkOperatorSUBTRACT, tkOperatorMUL, tkOperatorDIV, tkOperatorMOD, tkOperatorNOT_EQUAL
+	tkOperatorASSIGN, tkOperatorCOLON, tkOperatorADD, tkOperatorSUBTRACT, tkOperatorMUL, tkOperatorDIV, tkOperatorREMAINDER, tkOperatorNOT_EQUAL
 };
 
 std::vector<TokenType> delimitersTokens = {
@@ -47,17 +47,23 @@ std::map<TokenType, std::string> tokenToStringMap =
 	{ tkKeywordTHEN, "then" },
 	{ tkKeywordVOID, "void" },
 	{ tkKeywordELSE, "else" },
+	{ tkKeywordVAR, "var" },
+	{ tkSTART, "start"},
+	{ tkFINISH, "finish"},
+	{ tkKeywordPRINT, "print"},
+
 
 	// OPERATORS
 	{ tkOperatorADD, "+" },
 	{ tkOperatorASSIGN, "=" },
+	{ tkOperatorCOLON, ":"},
 	{ tkOperatorDIV, "/" },
 	{ tkOperatorEQUAL, "==" },
 	{ tkOperatorGREATER, ">" },
 	{ tkOperatorGREATER_EQUAL, ">=" },
 	{ tkOperatorLESS, "<" },
 	{ tkOperatorLESS_EQUAL, "<=" },
-	{ tkOperatorMOD, "%" },
+	{ tkOperatorREMAINDER, "%" },
 	{ tkOperatorMUL, "*" },
 	{ tkOperatorNOT_EQUAL, "!=" },
 	{ tkOperatorSUBTRACT, "-" },
@@ -102,4 +108,6 @@ void InitSymbols() {
 		delimiters.push_back(tokenToStringMap[delimitersTokens[i]]);
 	}
 }
+
+
 #endif // !SYMDEF_H

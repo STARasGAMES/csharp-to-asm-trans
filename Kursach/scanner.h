@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef SCANNER_H
+#define SCANNER_H
+
+
 #include "token.h"
 #include <istream>
 
@@ -16,7 +20,9 @@ Token Scan(std::istream *);
 
 void printToken(Token);
 
-TokenType getTokenTypeByString(const std::string);
+TokenType GetTokenTypeByString(const std::string);
 std::string GetStringByTokenType(const TokenType);
 
 void displayStream(std::istream *);
+
+#endif // !SCANNER_H

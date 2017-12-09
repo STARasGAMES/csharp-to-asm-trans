@@ -1,0 +1,15 @@
+var x : y .
+do
+	start
+		var x .
+		print 2 - x.
+		start 
+			var x .
+			print 1 .
+		finish 
+		repeat [ x == 0 ]
+		start
+			print 2.
+		finish
+	finish
+return
