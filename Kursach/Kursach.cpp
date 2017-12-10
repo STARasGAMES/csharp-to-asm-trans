@@ -30,11 +30,11 @@ int main()
 	input->clear();
 	input->seekg(0, std::ios::beg);
 	InitScanner();
-	Token token;
-	while ((token = Scan(input)).type != tkEOF) {
+	Token *token;
+	while ((token = Scan(input))->type != tkEOF) {
 
 		printToken(token);
-		if (token.type == tkNA)
+		if (token->type == tkNA)
 		{
 			printf("error: unknown token\n");
 			break;

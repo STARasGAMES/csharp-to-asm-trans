@@ -3,7 +3,7 @@
 #include "parser.h"
 #include <istream>
 
-Token tk = { "N/A", tkNA, 0 };
+Token *tk = new  Token( "N/A", tkNA, 0 );
 std::istream *fP = NULL;
 
 Node * getNode(NodeType);
@@ -20,7 +20,7 @@ void Parse(std::istream *filePtr) {
 
 	root = program();
 
-	if (tk.type == tkEOF)
+	if (tk->type == tkEOF)
 		printf("Parse OK! \n");
 	else {
 		printf("Parse NOT OK! \n");
@@ -33,14 +33,14 @@ void Parse(std::istream *filePtr) {
 	return;
 }
 
-void insertToken(Node *, Token);
+void insertToken(Node *, Token *);
 Node * var();
 Node * block();
 Node * program() {
 	OnEnterParseMethod("program");
 	Node *node = getNode(programNode);
 	node->child1 = var();
-	if (tk.type == tkKeywordDO || tk.type == tkKeywordVAR) {
+	if (tk->type == tkKeywordDO || tk->type == tkKeywordVAR) {
 		//insertToken(node, tk);
 		tk = Scan(fP);
 	}
@@ -50,7 +50,7 @@ Node * program() {
 	}
 
 	node->child2 = block();
-	if (tk.type == tkKeywordRETURN) {
+	if (tk->type == tkKeywordRETURN) {
 		//insertToken(node, tk);
 		tk = Scan(fP);
 		OnExitParseMethod("program");
@@ -66,10 +66,11 @@ Node * mvars();
 Node * var() {
 	OnEnterParseMethod("var");
 	Node *node = getNode(varNode);
-	if (tk.type == tkKeywordVAR) {
+	if (tk->type == tkKeywordVAR) {
 		//insertToken(node, tk);
 		tk = Scan(fP);
-		if (tk.type == tkID) {
+		if (tk->type == tkID) {
+
 			insertToken(node, tk);
 			//node->token = tk;
 			tk = Scan(fP);
@@ -79,7 +80,7 @@ Node * var() {
 			return 0;//exit(1);
 		}
 		node->child1 = mvars();
-		if (tk.type == tkDelimiterDOT) {
+		if (tk->type == tkDelimiterDOT) {
 			//insertToken(node, tk);
 			tk = Scan(fP);
 			OnExitParseMethod("var 1");
@@ -91,7 +92,7 @@ Node * var() {
 		}
 	}
 	else {
-		printf("WARNING: no VAR");
+		printf("WARNING: no VAR\n");
 		OnExitParseMethod("var 2");
 		return node; // predict <var> --> empty
 	}
@@ -100,10 +101,10 @@ Node * var() {
 Node * mvars() {
 	OnEnterParseMethod("mvars");
 	Node * node = getNode(mvarsNode);
-	if (tk.type == tkOperatorCOLON) {
+	if (tk->type == tkOperatorCOLON) {
 		//insertToken(node, tk);
 		tk = Scan(fP);
-		if (tk.type == tkID) {
+		if (tk->type == tkID) {
 			insertToken(node, tk);
 			//node->token = tk;
 			tk = Scan(fP);
@@ -126,12 +127,12 @@ Node * stats();
 Node * block() {
 	OnEnterParseMethod("block");
 	Node *node = getNode(blockNode);
-	if (tk.type == tkSTART) {
+	if (tk->type == tkSTART) {
 		//insertToken(node, tk);
 		tk = Scan(fP);
 		node->child1 = var();
 		node->child2 = stats();
-		if (tk.type == tkFINISH) {
+		if (tk->type == tkFINISH) {
 			//insertToken(node, tk);
 			tk = Scan(fP);
 			OnExitParseMethod("block");
@@ -167,39 +168,39 @@ Node * assign();
 Node * stat() {
 	OnEnterParseMethod("stat");
 	Node *node = getNode(statNode);
-	if (tk.type == tkKeywordREAD) {
+	if (tk->type == tkKeywordREAD) {
 		node->child1 = in();
 		OnExitParseMethod("stat 1");
 		return node;
 	}
-	else if (tk.type == tkKeywordPRINT) {
+	else if (tk->type == tkKeywordPRINT) {
 		node->child1 = out();
 		OnExitParseMethod("stat 2");
 		return node;
 	}
-	else if (tk.type == tkSTART) {
+	else if (tk->type == tkSTART) {
 		node->child1 = block();
 		OnExitParseMethod("stat 3");
 		return node;
 	}
-	else if (tk.type == tkKeywordIF) {
+	else if (tk->type == tkKeywordIF) {
 		node->child1 = ifTk();
 		OnExitParseMethod("stat 4");
 		return node;
 	}
-	else if (tk.type == tkKeywordREPEAT) {
+	else if (tk->type == tkKeywordREPEAT) {
 		node->child1 = loop();
 		OnExitParseMethod("stat 5");
 		return node;
 	}
-	else if (tk.type == tkID) {
+	else if (tk->type == tkID) {
 		node->child1 = assign();
 		OnExitParseMethod("stat 6");
 		return node;
 	}
 	else {
 		printf("ERROR: expect either tkKeywordREAD, tkKeywordPRINT, tkSTART, Iftk, tkKeywordREPEAT, or tkID. ");
-		printf("But received %s on line #%d \n", tk.str.c_str(), tk.lineNum);
+		printf("But received %s on line #%d \n", tk->str.c_str(), tk->lineNum);
 		return 0;//exit(1);
 	}
 }
@@ -207,8 +208,8 @@ Node * stat() {
 Node * mStat() {
 	OnEnterParseMethod("mStat");
 	Node *node = getNode(mStatNode);
-	if (tk.type == tkKeywordREAD || tk.type == tkKeywordPRINT || tk.type == tkSTART
-		|| tk.type == tkKeywordIF || tk.type == tkKeywordREPEAT || tk.type == tkID) {
+	if (tk->type == tkKeywordREAD || tk->type == tkKeywordPRINT || tk->type == tkSTART
+		|| tk->type == tkKeywordIF || tk->type == tkKeywordREPEAT || tk->type == tkID) {
 		node->child1 = stat();
 		node->child2 = mStat();
 		OnExitParseMethod("mStat 1");
@@ -223,16 +224,17 @@ Node * mStat() {
 Node * in() {
 	OnEnterParseMethod("in");
 	Node *node = getNode(inNode);
-	if (tk.type == tkKeywordREAD) {
+	if (tk->type == tkKeywordREAD) {
 		//insertToken(node, tk);
 		tk = Scan(fP);
-		if (tk.type == tkID) {
+		if (tk->type == tkID) {
 			insertToken(node, tk);
 			//node->token = tk;
 			tk = Scan(fP);
-			if (tk.type == tkDelimiterDOT) {
+			if (tk->type == tkDelimiterDOT) {
 				//insertToken(node, tk);
 				tk = Scan(fP);
+				OnExitParseMethod("in");
 				return node;
 			}
 			else {
@@ -255,13 +257,14 @@ Node * expr();
 Node * out() {
 	OnEnterParseMethod("out");
 	Node *node = getNode(outNode);
-	if (tk.type == tkKeywordPRINT) {
+	if (tk->type == tkKeywordPRINT) {
 		//insertToken(node, tk);
 		tk = Scan(fP);
 		node->child1 = expr();
-		if (tk.type == tkDelimiterDOT) {
+		if (tk->type == tkDelimiterDOT) {
 			//insertToken(node, tk);
 			tk = Scan(fP);
+			OnExitParseMethod("out");
 			return node;
 		}
 		else {
@@ -280,17 +283,20 @@ Node * expr() {
 	OnEnterParseMethod("expr");
 	Node *node = getNode(exprNode);
 	node->child1 = t();
-	if (tk.type == tkOperatorMUL) {
+	if (tk->type == tkOperatorMUL) {
 		tk = Scan(fP);
 		node->child2 = expr();
+		OnExitParseMethod("expr 1");
 		return node;
 	}
-	else if (tk.type == tkOperatorDIV) {
+	else if (tk->type == tkOperatorDIV) {
 		tk = Scan(fP);
 		node->child2 = expr();
+		OnExitParseMethod("expr 2");
 		return node;
 	}
 	else {
+		OnExitParseMethod("expr 3");
 		return node; // predict empty after <T>
 	}
 }
@@ -300,17 +306,20 @@ Node * t() {
 	OnEnterParseMethod("t");
 	Node *node = getNode(tNode);
 	node->child1 = f();
-	if (tk.type == tkOperatorADD) {
+	if (tk->type == tkOperatorADD) {
 		tk = Scan(fP);
 		node->child2 = t();
+		OnExitParseMethod("t 1");
 		return node;
 	}
-	else if (tk.type == tkOperatorSUBTRACT) {
+	else if (tk->type == tkOperatorSUBTRACT) {
 		tk = Scan(fP);
 		node->child2 = t();
+		OnExitParseMethod("t 2");
 		return node;
 	}
 	else {
+		OnExitParseMethod("t 3");
 		return node; // predict empty after <F>
 	}
 }
@@ -319,14 +328,16 @@ Node * r();
 Node * f() {
 	OnEnterParseMethod("f");
 	Node *node = getNode(fNode);
-	if (tk.type == tkOperatorSUBTRACT) {
+	if (tk->type == tkOperatorSUBTRACT) {
 		insertToken(node, tk);
 		tk = Scan(fP);
 		node->child1 = f();
+		OnExitParseMethod("f 1");
 		return node;
 	}
 	else {
 		node->child1 = r();
+		OnExitParseMethod("f 2");
 		return node;
 	}
 }
@@ -334,13 +345,14 @@ Node * f() {
 Node * r() {
 	OnEnterParseMethod("r");
 	Node *node = getNode(rNode);
-	if (tk.type == tkDelimiterLEFT_PA) {
+	if (tk->type == tkDelimiterLEFT_PA) {
 		insertToken(node, tk);
 		tk = Scan(fP);
 		node->child1 = expr();
-		if (tk.type == tkDelimiterRIGHT_PA) {
+		if (tk->type == tkDelimiterRIGHT_PA) {
 			insertToken(node, tk);
 			tk = Scan(fP);
+			OnExitParseMethod("r 1");
 			return node;
 		}
 		else {
@@ -348,20 +360,22 @@ Node * r() {
 			return 0;//exit(1);
 		}
 	}
-	else if (tk.type == tkID) {
+	else if (tk->type == tkID) {
 		insertToken(node, tk);
 		tk = Scan(fP);
+		OnExitParseMethod("r 2");
 		return node;
 	}
-	else if (tk.type == tkNUMBER) {
+	else if (tk->type == tkNUMBER) {
 		insertToken(node, tk);
 		//node->token = tk;
 		tk = Scan(fP);
+		OnExitParseMethod("r 3");
 		return node;
 	}
 	else {
 		printf("ERROR: expect either tkDelimiterLEFT_PA, or tkID, or tkNUMBER. ");
-		printf("But received %s on line #%d \n", tk.str.c_str(), tk.lineNum);
+		printf("But received %s on line #%d \n", tk->str.c_str(), tk->lineNum);
 		return 0;//exit(1);
 	}
 }
@@ -369,34 +383,40 @@ Node * r() {
 /*------ for re-written grammar ------*/
 void y() {
 	OnEnterParseMethod("y");
-	if (tk.type == tkOperatorADD) {
+	if (tk->type == tkOperatorADD) {
 		tk = Scan(fP);
 		t();
+		OnExitParseMethod("y 1");
 		return;
 	}
-	else if (tk.type == tkOperatorSUBTRACT) {
+	else if (tk->type == tkOperatorSUBTRACT) {
 		tk = Scan(fP);
 		t();
+		OnExitParseMethod("y 2");
 		return;
 	}
 	else {
+		OnExitParseMethod("y 3");
 		return; // predict <Y> --> empty	
 	}
 }
 
 void x() {
 	OnEnterParseMethod("x");
-	if (tk.type == tkOperatorMUL) {
+	if (tk->type == tkOperatorMUL) {
 		tk = Scan(fP);
 		expr();
+		OnExitParseMethod("x 1");
 		return;
 	}
-	else if (tk.type == tkOperatorDIV) {
+	else if (tk->type == tkOperatorDIV) {
 		tk = Scan(fP);
 		expr();
+		OnExitParseMethod("x 2");
 		return;
 	}
 	else {
+		OnExitParseMethod("x 3");
 		return; // predict <X> --> empty
 	}
 }
@@ -406,17 +426,18 @@ Node * ro();
 Node * ifTk() {
 	OnEnterParseMethod("ifTk");
 	Node *node = getNode(ifNode);
-	if (tk.type == tkKeywordIF) {
+	if (tk->type == tkKeywordIF) {
 		//insertToken(node, tk);
 		tk = Scan(fP);
-		if (tk.type == tkDelimiterLEFT_BRACKET) {
+		if (tk->type == tkDelimiterLEFT_BRACKET) {
 			tk = Scan(fP);
 			node->child1 = expr();
 			node->child2 = ro();
 			node->child3 = expr();
-			if (tk.type == tkDelimiterRIGHT_BRACKET) {
+			if (tk->type == tkDelimiterRIGHT_BRACKET) {
 				tk = Scan(fP);
 				node->child4 = block();
+				OnExitParseMethod("ifTK 1");
 				return node;
 			}
 			else {
@@ -438,39 +459,45 @@ Node * ifTk() {
 Node * ro() {
 	OnEnterParseMethod("ro");
 	Node *node = getNode(roNode);
-	if (tk.type == tkOperatorLESS_EQUAL) {
+	if (tk->type == tkOperatorLESS_EQUAL) {
 		insertToken(node, tk);
 		tk = Scan(fP);
+		OnExitParseMethod("ro 1");
 		return node;
 	}
-	else if (tk.type == tkOperatorGREATER_EQUAL) {
+	else if (tk->type == tkOperatorGREATER_EQUAL) {
 		insertToken(node, tk);
 		tk = Scan(fP);
+		OnExitParseMethod("ro 2");
 		return node;
 	}
-	else if (tk.type == tkOperatorEQUAL) {
+	else if (tk->type == tkOperatorEQUAL) {
 		insertToken(node, tk);
 		tk = Scan(fP);
+		OnExitParseMethod("ro 3");
 		return node;
 	}
-	else if (tk.type == tkOperatorGREATER) {
+	else if (tk->type == tkOperatorGREATER) {
 		insertToken(node, tk);
 		tk = Scan(fP);
+		OnExitParseMethod("ro 4");
 		return node;
 	}
-	else if (tk.type == tkOperatorLESS) {
+	else if (tk->type == tkOperatorLESS) {
 		insertToken(node, tk);
 		tk = Scan(fP);
+		OnExitParseMethod("ro 5");
 		return node;
 	}
-	else if (tk.type == tkOperatorDIFF) {
+	else if (tk->type == tkOperatorDIFF) {
 		insertToken(node, tk);
 		tk = Scan(fP);
+		OnExitParseMethod("ro 6");
 		return node;
 	}
 	else {
 		printf("ERROR: expect relational operator, but received %s on line #%d \n",
-			tk.str.c_str(), tk.lineNum);
+			tk->str.c_str(), tk->lineNum);
 		return 0;//exit(1);
 	}
 }
@@ -479,17 +506,18 @@ Node * assign() {
 	OnEnterParseMethod("assign");
 	Node *node = getNode(assignNode);
 
-	if (tk.type == tkID) {
+	if (tk->type == tkID) {
 		insertToken(node, tk);
 		//node->token = tk;
 		tk = Scan(fP);
-		if (tk.type == tkOperatorASSIGN) {
+		if (tk->type == tkOperatorASSIGN) {
 			//insertToken(node, tk);
 			tk = Scan(fP);
 			expr();
-			if (tk.type == tkDelimiterDOT) {
+			if (tk->type == tkDelimiterDOT) {
 				insertToken(node, tk);
 				tk = Scan(fP);
+				OnExitParseMethod("assign ");
 				return node;
 			}
 			else {
@@ -512,17 +540,18 @@ Node * assign() {
 Node * loop() {
 	OnEnterParseMethod("loop");
 	Node *node = getNode(loopNode);
-	if (tk.type == tkKeywordREPEAT) {
+	if (tk->type == tkKeywordREPEAT) {
 		//insertToken(node, tk);
 		tk = Scan(fP);
-		if (tk.type == tkDelimiterLEFT_BRACKET) {
+		if (tk->type == tkDelimiterLEFT_BRACKET) {
 			tk = Scan(fP);
 			node->child1 = expr();
 			node->child2 = ro();
 			node->child3 = expr();
-			if (tk.type == tkDelimiterRIGHT_BRACKET) {
+			if (tk->type == tkDelimiterRIGHT_BRACKET) {
 				tk = Scan(fP);
 				node->child4 = block();
+				OnExitParseMethod("loop");
 				return node;
 			}
 			else {
@@ -561,32 +590,20 @@ void printParseTree(Node *root, int level) {
 	printf(" [Token %s on line #%d]", root->token.str, root->token.lineNum);
 	}
 	*/
-
-	Token *tmp = root->tokenPtr;
-	int isTokenFound = 0; // false
-	if (tmp != NULL) {
-		isTokenFound = 1;
+	if (root->tokenPtr->size() > 0)
+	{
 		printf("{Token(s) found: ");
-	}
-
-	while (tmp != NULL) {
-		int isLastToken = 0; // false
-		int lineN = tmp->lineNum;
-		std::string str = tmp->str;
-		std::string typeStr = GetStringByTokenType(tmp->type);
-		printf("%s (%s, #%d)", str.c_str(), typeStr.c_str(), lineN);
-		tmp = tmp->next;
-		if (tmp == NULL)
-			isLastToken = 1;
-		if (!isLastToken) {
-			printf(", and ");
+		for (int i = 0; i < root->tokenPtr->size(); i++)
+		{
+			int lineN = root->tokenPtr->operator[](i).lineNum;
+			std::string str = root->tokenPtr->operator[](i).str;
+			std::string typeStr = GetStringByTokenType(root->tokenPtr->operator[](i).type);
+			printf("%s (%s, #%d)", str.c_str(), typeStr.c_str(), lineN);
+			if (root->tokenPtr->size() - i > 1)
+				printf(", and ");
 		}
-	}
-
-	if (isTokenFound) {
 		printf("}");
 	}
-
 	printf("\n");
 
 	printParseTree(root->child1, level + 1);
@@ -596,32 +613,36 @@ void printParseTree(Node *root, int level) {
 }
 
 // Mark the new node by its type
-Node *getNode(NodeType nodeType) {
-	Node nNode;
-	Node *node;
-	node = &nNode;//(Node *)malloc(sizeof(Node));
+Node* getNode(NodeType nodeType) {
+	Node *node = new Node();
+	//Node *node;
+	//node = &nNode;//(Node *)malloc(sizeof(Node));
 
 	node->nodeType = nodeType;
-	node->tokenPtr = NULL;
+	Token someDefToken ("SHIET", tkNA, -2);
+	/*
+	node->tokenPtr->push_back(someDefToken);
+	node->tokenPtr->push_back(someDefToken);
+	node->tokenPtr->push_back(someDefToken);
+	node->tokenPtr->push_back(someDefToken);*/
 	node->child1 = node->child2 = node->child3 = node->child4 = NULL;
 
 	return node;
 }
 
-Token *getTokenPtr(Token tk) {
-	Token token;
-	Token *tokenPtr = &token;//(Token *)malloc(sizeof(Token));
-	token.str = tk.str;
-	tokenPtr->lineNum = tk.lineNum;
-	tokenPtr->type = tk.type;
+Token *getTokenPtr(Token *tk) {
+	Token *tokenPtr = new Token(tk->str, tk->type, tk->lineNum);//(Token *)malloc(sizeof(Token));
 	return tokenPtr;
 }
 
 // Insert new token at the end of the linked-list of tokens 
-void insertToken(Node *node, Token tk) {
-	Token *newToken = getTokenPtr(tk);
-	
-	if (node->tokenPtr == NULL) {
+void insertToken(Node *node, Token *tk) {
+	Token *newToken = new Token(tk->str, tk->type, tk->lineNum);// getTokenPtr(tk);
+	/*printf("\n\n");
+	printToken(newToken);
+	printf("\n\n");*/
+	node->tokenPtr->push_back(*newToken);
+	/*if (node->tokenPtr == NULL) {
 		node->tokenPtr = newToken;
 	}
 	else {
@@ -634,13 +655,13 @@ void insertToken(Node *node, Token tk) {
 			tmp = tmp->next;
 		}
 		tmp->next = newToken;
-	}
+	}*/
 }
 
 
-void ErrorTokenExceptation(std::string context, TokenType except, Token recieved) {
+void ErrorTokenExceptation(std::string context, TokenType except, Token *recieved) {
 	std::string tokenTypeName = GetStringByTokenType(except);
-	printf("ERROR[%s]: expect '%s', but received '%s' on line #%d \n", context.c_str(), tokenTypeName.c_str(), tk.str.c_str(), tk.lineNum);
+	printf("ERROR[%s]: expect '%s', but received '%s' on line #%d \n", context.c_str(), tokenTypeName.c_str(), tk->str.c_str(), tk->lineNum);
 }
 
 int curMethodLevel = 0;
@@ -653,7 +674,7 @@ void OnEnterParseMethod(std::string context)
 	{
 		space.append("   ");
 	}
-	printf("%s %d <%s>, current token:'%s', type:'%s'\n", space.c_str(), curMethodLevel, context.c_str(), tk.str.c_str(), GetStringByTokenType(tk.type).c_str());
+	printf("%s %d <%s>, current token:'%s', type:'%s'\n", space.c_str(), curMethodLevel, context.c_str(), tk->str.c_str(), GetStringByTokenType(tk->type).c_str());
 }
 
 void OnExitParseMethod(std::string context)
@@ -663,7 +684,7 @@ void OnExitParseMethod(std::string context)
 	{
 		space.append("   ");
 	}
-	printf("%s %d </%s>, current token: '%s', type:'%s'\n", space.c_str(), curMethodLevel, context.c_str(), tk.str.c_str(), GetStringByTokenType(tk.type).c_str());
+	printf("%s %d </%s>, current token: '%s', type:'%s'\n", space.c_str(), curMethodLevel, context.c_str(), tk->str.c_str(), GetStringByTokenType(tk->type).c_str());
 	curMethodLevel--;
 }
 

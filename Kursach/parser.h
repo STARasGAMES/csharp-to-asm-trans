@@ -8,7 +8,7 @@
 #include "token.h"
 
 void Parse(std::istream *);
-void ErrorTokenExceptation(std::string context, TokenType except, Token recieved);
+void ErrorTokenExceptation(std::string context, TokenType except, Token *recieved);
 void OnEnterParseMethod(std::string context);
 void OnExitParseMethod(std::string context);
 // Represent non-terminal token nodes
@@ -20,9 +20,14 @@ typedef enum {
 
 /*------- TREE -------*/
 struct Node {
+
+	Node()
+	{
+		tokenPtr = new std::vector<Token>();
+	}
 	NodeType nodeType;
-	
-	Token *tokenPtr; // linked-list of tokens of this node 
+	std::vector<Token> *tokenPtr;
+	//Token *tokenPtr; // linked-list of tokens of this node 
 	struct Node *child1; // usually only up to 3 children needed 
 	struct Node *child2;
 	struct Node *child3;

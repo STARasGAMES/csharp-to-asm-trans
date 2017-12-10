@@ -10,9 +10,9 @@ void InitScanner() {
 	InitSymbols();
 }
 
-Token Scan(std::istream *filePtr) {
+Token *Scan(std::istream *filePtr) {
 	//printf("\n*** in scanner.c ***\n");
-	Token token;
+	Token *token = new Token();
 	char ch;
 	word.clear();
 	numStr.clear();
@@ -39,14 +39,14 @@ Token Scan(std::istream *filePtr) {
 				word.push_back(ch);
 			while ((*filePtr).get(ch) && isalnum(ch));
 			(*filePtr).putback(ch);
-			token.str = word;
+			token->setStr(word);
 			if (isKeyword(word) != -1) {
-				token.type = GetTokenTypeByString(word);
+				token->type = GetTokenTypeByString(word);
 			}
 			else {
-				token.type = tkID;
+				token->type = tkID;
 			}
-			token.lineNum = lineNum;
+			token->lineNum = lineNum;
 
 			//fseek(filePtr, -1, SEEK_CUR);
 			return token;
@@ -60,9 +60,9 @@ Token Scan(std::istream *filePtr) {
 					if (isalpha(ch))
 					{
 						numStr.push_back(ch);
-						token.str = numStr;
-						token.type = tkNA;
-						token.lineNum = lineNum;
+						token->setStr(numStr);
+						token->type = tkNA;
+						token->lineNum = lineNum;
 						return token;
 					}
 					break;
@@ -70,9 +70,9 @@ Token Scan(std::istream *filePtr) {
 			}
 			while ((*filePtr).get(ch));
 			(*filePtr).putback(ch);
-			token.str = numStr;
-			token.type = tkNUMBER;
-			token.lineNum = lineNum;
+			token->setStr(numStr);
+			token->type = tkNUMBER;
+			token->lineNum = lineNum;
 
 			//fseek(filePtr, -1, SEEK_CUR);
 			return token;
@@ -85,9 +85,9 @@ Token Scan(std::istream *filePtr) {
 			word = ch;
 
 			if (isDelimiter(word) != -1) {
-				token.str = ch;
-				token.type = GetTokenTypeByString(token.str);
-				token.lineNum = lineNum;
+				token->setStr(word);
+				token->type = GetTokenTypeByString(token->str);
+				token->lineNum = lineNum;
 				return token;
 			}
 
@@ -97,9 +97,9 @@ Token Scan(std::istream *filePtr) {
 				if (isOperator(word) != -1)
 				{
 					//printf("is Relational operator %s \n", word.c_str());
-					token.lineNum = lineNum;
-					token.str = word;
-					token.type = GetTokenTypeByString(token.str);
+					token->lineNum = lineNum;
+					token->setStr(word);
+					token->type = GetTokenTypeByString(token->str);
 					//printf("Relational operator type %d \n", token.type);
 					return token;
 				}
@@ -110,14 +110,14 @@ Token Scan(std::istream *filePtr) {
 			if (isOperator(word) != -1)
 			{
 				//printf("isOperator '%c' \n", ch);
-				token.lineNum = lineNum;
-				token.str = word;
-				token.type = GetTokenTypeByString(token.str);
+				token->lineNum = lineNum;
+				token->setStr(word);
+				token->type = GetTokenTypeByString(token->str);
 				return token;
 			}
-			token.lineNum = lineNum;
-			token.str = ch;
-			token.type = tkNA;
+			token->lineNum = lineNum;
+			token->setStr(word);
+			token->type = tkNA;
 			return token;
 		} // end if ispunct
 
@@ -127,7 +127,7 @@ Token Scan(std::istream *filePtr) {
 
 	  //printf("\n*** in scanner.c ***\n");
 
-	token.type = tkEOF;
+	token->type = tkEOF;
 	return token;
 }
 
@@ -222,17 +222,21 @@ std::string GetStringByTokenType(const TokenType type) {
 	return result;
 }
 
-void printToken(Token token) {
-	if (token.type == tkEOF) {
+void printToken(Token *token) {
+	if (token->type == tkEOF) {
 		printf("***** tkEOF ***** \n\n");
 		return;
 	}
-	std::string out1 = "'" + token.str + "'";
-	printf("%10s \t line #%d \t %s \n",
-		out1.c_str(), token.lineNum, GetStringByTokenType(token.type).c_str());
+	if (token == NULL)
+		printf("shet3");
+	if (token->str.c_str() == 0)
+		printf("shet1");
+	std::string out1 = "'" + (*token).str + "'";
+	//printf("shet2 %d", token->str.c_str());
+	printf("%10s \t line #%d \t %s \n", out1.c_str(), token->lineNum, GetStringByTokenType(token->type).c_str());
 }
 
-TokenType GetTokenTypeByString(const std::string word) {
+TokenType GetTokenTypeByString(std::string &word) {
 	return stringToTokenTypeMap[word];
 }
 void displayStream(std::istream* filePtr) {

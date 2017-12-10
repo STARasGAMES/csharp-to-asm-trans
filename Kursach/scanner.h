@@ -16,11 +16,11 @@ int isKeyword(const std::string);
 
 void InitScanner();
 
-Token Scan(std::istream *);
+Token *Scan(std::istream *);
 
-void printToken(Token);
+void printToken(Token*);
 
-TokenType GetTokenTypeByString(const std::string);
+TokenType GetTokenTypeByString(std::string &);
 std::string GetStringByTokenType(const TokenType);
 
 void displayStream(std::istream *);

@@ -67,10 +67,41 @@ typedef enum {
 
 
 struct Token {
+
+	Token(std::string str, TokenType type, int lineNum)
+	{
+		std::string buf = str;
+		this->str = buf;
+		this->type = type;
+		this->lineNum = lineNum;
+	}
+
+	Token(TokenType type)
+	{
+		std::string buf = "non initialized token";
+		this->str = buf;
+		this->type = type;
+		this->lineNum = -1;
+	}
+
+	Token()
+	{
+		std::string buf = "non initialized token";
+		this->str = buf;
+		this->type = tkNA;
+		this->lineNum = -1;
+	}
+
 	std::string str;
 	TokenType type;
 	int lineNum;
 	Token *next;
+
+	void setStr(std::string s)
+	{
+		std::string buf = s;
+		this->str = buf;
+	}
 
 	/*std::vector<Token> *next;*/ // linked-list, used for parse tree
 };
