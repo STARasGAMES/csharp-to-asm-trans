@@ -495,6 +495,12 @@ Node * ro() {
 		OnExitParseMethod("ro 6");
 		return node;
 	}
+	else if (tk->type == tkOperatorNOT_EQUAL) {
+		insertToken(node, tk);
+		tk = Scan(fP);
+		OnExitParseMethod("ro 7");
+		return node;
+	}
 	else {
 		printf("ERROR: expect relational operator, but received %s on line #%d \n",
 			tk->str.c_str(), tk->lineNum);
@@ -575,14 +581,14 @@ Node * loop() {
 
 // Hard-code to map with enum NodeType declared in Parse.h 
 char *nodeTypeStrArr[] = {
-	"<program>", "<block>", "<var>", "<mvars>", "<expr>", "<x>", "<t>", "<y>", "<f>", "<r>",
-	"<stats>", "<mStat>", "<stat>", "<in>", "<out>", "<if>", "<loop>", "<assign>", "<ro>"
+	"program", "block", "var", "mvars", "expr", "x", "t", "y", "f", "r",
+	"stats", "mStat", "stat", "in", "out", "if", "loop", "assign", "ro"
 };
 
 
 void printParseTree(Node *root, int level) {
 	if (root == NULL) return;
-	printf("%*s" "%d %s ", level * 4, "", level, nodeTypeStrArr[root->nodeType]);
+	printf("%*s" "%d <%s> ", level * 4, "", level, nodeTypeStrArr[root->nodeType]);
 	// printf("%*s" "%s ", level * 4, "", nodeTypeStrArr[root->nodeType]);
 	/*
 	if (root->token.type != NAtk && root->token.type != EOFtk) {
@@ -610,6 +616,8 @@ void printParseTree(Node *root, int level) {
 	printParseTree(root->child2, level + 1);
 	printParseTree(root->child3, level + 1);
 	printParseTree(root->child4, level + 1);
+	printf("%*s" "%d </%s>\n ", level * 4, "", level, nodeTypeStrArr[root->nodeType]);
+
 }
 
 // Mark the new node by its type

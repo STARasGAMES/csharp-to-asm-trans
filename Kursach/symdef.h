@@ -21,7 +21,7 @@ std::vector<TokenType> keywordsTokens = {
 
 std::vector<TokenType> operatorsTokens = {
 	// Relational Operators (==  <  >  =!=    =>  =<)
-	tkOperatorEQUAL, tkOperatorGREATER, tkOperatorLESS, tkOperatorGREATER_EQUAL, tkOperatorLESS_EQUAL,
+	tkOperatorEQUAL, tkOperatorGREATER, tkOperatorLESS, tkOperatorGREATER_EQUAL, tkOperatorLESS_EQUAL, tkOperatorNOT_EQUAL,
 
 	// Other operators (= :  +  -  *  / %)
 	tkOperatorASSIGN, tkOperatorCOLON, tkOperatorADD, tkOperatorSUBTRACT, tkOperatorMUL, tkOperatorDIV, tkOperatorREMAINDER, tkOperatorNOT_EQUAL

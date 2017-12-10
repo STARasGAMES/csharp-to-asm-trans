@@ -2,6 +2,7 @@ var x : y .
 do
 	start
 		var x .
+		x = 1 - 2+3*6.
 		print 2 - x.
 		start 
 			var x .
