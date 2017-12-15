@@ -1,0 +1,140 @@
+
+
+<program>   -->    
+    <declaretion-global-seq> void Main() <statement-block>
+
+<literal>:
+	<boolean-literal>
+	Number
+	
+<boolean-literal>:
+	true
+	false
+
+<char-literal>:
+    ' character '
+
+<string-literal>:
+    " ID "
+
+<type>:
+    int
+    bool
+    char
+    string
+
+// Expressions //
+	<primary-expression>:
+		<literal>
+		ID
+		( <expression> )
+        <primary-expression> [ <expression> ]
+    
+        
+	<expression>:
+		<assignment-expression>
+		<assignment-expression> , <expression> 
+		
+	<assignment-expression>:
+		<conditional-expression>
+		<logical-or-expression> <assignment-operator> <assignment-expression>
+		
+    <multiplicative-expression>:
+        <primary-expression>
+        <multiplicative-expression> * <primary-expression>
+        <multiplicative-expression> / <primary-expression>
+        <multiplicative-expression> % <primary-expression>
+
+    <additive-expression>:
+        <multiplicative-expression>
+        <additive-expression> + <multiplicative-expression>
+        <additive-expression> - <multiplicative-expression>
+
+    <shift-expression>:
+        <additive-expression>
+        <shift-expression> << <additive-expression>
+        <shift-expression> >> <additive-expression>
+		
+    <relational-expression>:
+        <shift-expression>
+        <relational-expression> < <shift-expression>
+        <relational-expression> > <shift-expression>
+        <relational-expression> <= <shift-expression>
+        <relational-expression> >= <shift-expression>
+		
+    <equality-expression>:
+        <relational-expression>
+        <equality-expression> == <relational-expression>
+        <equality-expression> != <relational-expression>
+		
+    <and-expression>:
+        <equality-expression>
+        <and-expression> & <equality-expression>
+		
+    <exclusive-or-expression>:
+        <and-expression>
+        <exclusive-or-expression> ^ <and-expression>
+		
+    <inclusive-or-expression>:
+        <exclusive-or-expression>
+        <inclusive-or-expression> | <exclusive-or-expression>
+	
+    <logical-and-expression>:
+        <inclusive-or-expression>
+        <logical-and-expression> && <inclusive-or-expression>
+		
+	<logical-or-expression>:
+		<logical-and-expression>
+		<logical-or-expression> || <logical-and-expression>
+
+	<conditional-expression>:
+		<logical-or-expression>
+		<logical-or-expression> ? <expression> : <assignment-expression>
+			
+	<assignment-operator>: one of
+		=  *=  /=  %=   +=  -=  >>=  <<=  &=  ^=  |=
+		
+// Statements //
+    <statement-block>:
+        <statement>
+        { <statement-seq> }
+        
+    <statement-seq>:
+        <statement>
+        <statement> <statement-seq>
+        
+
+	<statement>:
+		<labeled-statement>
+		<expession-statement>
+        <selection-statement>
+		<declaretion-statement>
+        break ;
+		
+	<labeled-statement>:
+		case <conditional-expression> : <statement-seq>
+		default : <statement-seq>
+        
+	<expession-statement>:
+        <expression> ;
+        
+	<selection-statement>:
+        if ( <expression> ) <statement-block>
+        if ( <expression> ) <statement-block> else <statement-block>
+        switch ( <expression> ) <statement-block>
+    
+    <declaretion-statement>:
+        <type> <declaretion-statement-list>
+    
+    <declaretion-statement-list>:
+        ID
+        ID, <declaretion-statement-list>
+    
+    
+// Declarations //
+    
+	<declaretion-global-seq>:
+        empty
+        <declaretion-statement>;
+        <declaretion-statement>; <declaretion-global-seq>
+	

@@ -20,7 +20,7 @@ typedef enum {
 
 	//// Keywords (start finish then if repeat var int float do 
 	//// read print void return dummy program) 
-	//tkKeywordTHEN, tkKeywordIF, tkKeywordREPEAT, tkKeywordINT, tkKeywordFLOAT,
+	//tkKeywordTHEN, tkKeywordIF, tkKeywordWHILE, tkKeywordINT, tkKeywordFLOAT,
 	//tkKeywordDO, tkKeywordVOID, tkKeywordRETURN, tkKeywordELSE, 
 
 	//// Number: sequence of decimal digits, no sign, no longer than MAX digits
@@ -44,17 +44,23 @@ typedef enum {
 
 	// Keywords (start finish then if repeat var int float do 
 	// read print void return dummy program) 
-	tkSTART, tkFINISH, tkKeywordTHEN, tkKeywordIF, tkKeywordELSE, tkKeywordREPEAT, tkKeywordVAR, tkKeywordINT, tkKeywordFLOAT,
-	tkKeywordDO, tkKeywordREAD, tkKeywordPRINT, tkKeywordVOID, tkKeywordRETURN, tkKeywordDUMMY, tkKeywordPROGRAM,
+	tkKeywordIF, tkKeywordELSE, tkKeywordSWITCH, tkKeywordCASE, tkKeywordDEFAULT,  tkKeywordINT, tkKeywordBOOL,
+	tkKeywordVOID, tkKeywordBREAK, tkKeywordTRUE, tkKeywordFALSE,
 
-	// Number: sequence of decimal digits, no sign, no longer than MAX digits
+	// Number: sequence of decimal digits
 	tkNUMBER,
 
-	// Relational Operators (==  !=  <  >  =!=   <=  >=)
-	tkOperatorEQUAL, tkOperatorNOT_EQUAL, tkOperatorGREATER, tkOperatorLESS, tkOperatorDIFF, tkOperatorGREATER_EQUAL, tkOperatorLESS_EQUAL,
+	// Relational Operators (==  !=  >  <  >=  <=)
+	tkOperatorEQUAL, tkOperatorNOT_EQUAL, tkOperatorGREATER, tkOperatorLESS, tkOperatorGREATER_EQUAL, tkOperatorLESS_EQUAL,
 
-	// Other operators (= :  +  -  *  / %)
-	tkOperatorASSIGN, tkOperatorCOLON, tkOperatorADD, tkOperatorSUBTRACT, tkOperatorMUL, tkOperatorDIV, tkOperatorREMAINDER,
+	// Other operators (= :  +  -  *  / %  ++  --  +=  -=  &  |  ^  &&  ||  ?)
+	tkOperatorASSIGN, tkOperatorCOLON, tkOperatorADD, 
+	tkOperatorSUBTRACT, tkOperatorMUL, tkOperatorDIV, 
+	tkOperatorREMAINDER, tkOperatorINC, tkOperatorDEC, 
+	tkOperatorADD_ASSIGN, tkOperatorSUB_ASSIGN, 
+	tkOperatorAND, tkOperatorOR, tkOperatorXOR,
+	tkOperatorLOGICAL_AND, tkOperatorLOGICAL_OR,
+	tkOperatorQUESTION_MARK,
 
 	// Delimiters (. (  ) , { } ; [ ])
 	tkDelimiterDOT, tkDelimiterLEFT_PA, tkDelimiterRIGHT_PA, tkDelimiterCOMMA, tkDelimiterLEFT_BRACE, tkDelimiterRIGHT_BRACE,
@@ -95,7 +101,10 @@ struct Token {
 	std::string str;
 	TokenType type;
 	int lineNum;
-	Token *next;
+
+	int id = -1;
+	Token *next = 0;
+	Token *prev = 0;
 
 	void setStr(std::string s)
 	{
@@ -103,6 +112,31 @@ struct Token {
 		this->str = buf;
 	}
 
+	Token *GetTokenById(int findId)
+	{
+		if (findId == id)
+			return this; 
+		if (findId > id)
+		{
+			if (next == 0)
+			{
+				printf("ERROR: token.h:GetTokenById 1");
+				return 0;
+			}
+			return next->GetTokenById(findId);
+		}
+		else
+		{
+			if (prev == 0)
+			{
+				printf("ERROR: token.h:GetTokenById 2");
+				return 0;
+			}
+			return prev->GetTokenById(findId);
+		}
+	}
+
+	
 	/*std::vector<Token> *next;*/ // linked-list, used for parse tree
 };
 

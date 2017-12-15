@@ -3,591 +3,80 @@
 #include "parser.h"
 #include <istream>
 
-Token *tk = new  Token( "N/A", tkNA, 0 );
-std::istream *fP = NULL;
+Token *tk = new  Token("N/A", tkNA, 0);
 
-Node * getNode(NodeType);
 void printParseTree(Node *, int);
 
-Node * program();
-void Parse(std::istream *filePtr) {
-	lineNum = 1; // reset line number
-	fP = filePtr;
-	//rewind(fP); TODO
+void Next() {
+	tk = tk->next;
+	if (tk == 0)
+		throw std::exception("next token error");
+}
 
-	tk = Scan(fP);
+Node* Parse(Token * rootToken) {
+	lineNum = 1; 
+
+	tk = rootToken;
 	Node *root = NULL;
 
-	root = program();
-
-	if (tk->type == tkEOF)
+	if (Program(rootToken, root))
+	{
 		printf("Parse OK! \n");
-	else {
+	}
+	else
+	{
 		printf("Parse NOT OK! \n");
-		return;
-		//exit(1);
+		return 0;
 	}
 
 	printf("\n*-----Parse Tree-----*\n");
 	printParseTree(root, 0);
-	return;
+	return &(*root);
 }
 
-void insertToken(Node *, Token *);
-Node * var();
-Node * block();
-Node * program() {
-	OnEnterParseMethod("program");
-	Node *node = getNode(programNode);
-	node->child1 = var();
-	if (tk->type == tkKeywordDO || tk->type == tkKeywordVAR) {
-		//insertToken(node, tk);
-		tk = Scan(fP);
-	}
-	else {
-		ErrorTokenExceptation("program", tkKeywordVAR, tk);
-		return 0;//exit(1);
-	}
-
-	node->child2 = block();
-	if (tk->type == tkKeywordRETURN) {
-		//insertToken(node, tk);
-		tk = Scan(fP);
-		OnExitParseMethod("program");
-		return node;
-	}
-	else {
-		ErrorTokenExceptation("program", tkKeywordRETURN, tk);
-		return 0;//exit(1);
-	}
-}
-
-Node * mvars();
-Node * var() {
-	OnEnterParseMethod("var");
-	Node *node = getNode(varNode);
-	if (tk->type == tkKeywordVAR) {
-		//insertToken(node, tk);
-		tk = Scan(fP);
-		if (tk->type == tkID) {
-
-			insertToken(node, tk);
-			//node->token = tk;
-			tk = Scan(fP);
-		}
-		else {
-			ErrorTokenExceptation("var", tkID, tk);
-			return 0;//exit(1);
-		}
-		node->child1 = mvars();
-		if (tk->type == tkDelimiterDOT) {
-			//insertToken(node, tk);
-			tk = Scan(fP);
-			OnExitParseMethod("var 1");
-			return node;
-		}
-		else {
-			ErrorTokenExceptation("var", tkDelimiterDOT, tk);
-			return 0;//exit(1);
-		}
-	}
-	else {
-		printf("WARNING: no VAR\n");
-		OnExitParseMethod("var 2");
-		return node; // predict <var> --> empty
-	}
-}
-
-Node * mvars() {
-	OnEnterParseMethod("mvars");
-	Node * node = getNode(mvarsNode);
-	if (tk->type == tkOperatorCOLON) {
-		//insertToken(node, tk);
-		tk = Scan(fP);
-		if (tk->type == tkID) {
-			insertToken(node, tk);
-			//node->token = tk;
-			tk = Scan(fP);
-		}
-		else {
-			ErrorTokenExceptation("mvars", tkID, tk);
-			return 0;//exit(1);
-		}
-		node->child1 = mvars();
-		OnExitParseMethod("mvars 1");
-		return node;
-	}
-	else {
-		OnExitParseMethod("mvars 2");
-		return node; // predict <mvars> --> empty
-	}
-}
-
-Node * stats();
-Node * block() {
-	OnEnterParseMethod("block");
-	Node *node = getNode(blockNode);
-	if (tk->type == tkSTART) {
-		//insertToken(node, tk);
-		tk = Scan(fP);
-		node->child1 = var();
-		node->child2 = stats();
-		if (tk->type == tkFINISH) {
-			//insertToken(node, tk);
-			tk = Scan(fP);
-			OnExitParseMethod("block");
-			return node;
-		}
-		else {
-			ErrorTokenExceptation("block", tkFINISH, tk);
-			return 0;//exit(1);
-		}
-	}
-	else {
-		ErrorTokenExceptation("block", tkSTART, tk);
-		return 0;//exit(1);
-	}
-}
-
-Node * stat();
-Node * mStat();
-Node * stats() {
-	OnEnterParseMethod("stats");
-	Node *node = getNode(statsNode);
-	node->child1 = stat();
-	node->child2 = mStat();
-	OnExitParseMethod("stats");
-	return node;
-}
-
-Node * in();
-Node * out();
-Node * loop();
-Node * ifTk();
-Node * assign();
-Node * stat() {
-	OnEnterParseMethod("stat");
-	Node *node = getNode(statNode);
-	if (tk->type == tkKeywordREAD) {
-		node->child1 = in();
-		OnExitParseMethod("stat 1");
-		return node;
-	}
-	else if (tk->type == tkKeywordPRINT) {
-		node->child1 = out();
-		OnExitParseMethod("stat 2");
-		return node;
-	}
-	else if (tk->type == tkSTART) {
-		node->child1 = block();
-		OnExitParseMethod("stat 3");
-		return node;
-	}
-	else if (tk->type == tkKeywordIF) {
-		node->child1 = ifTk();
-		OnExitParseMethod("stat 4");
-		return node;
-	}
-	else if (tk->type == tkKeywordREPEAT) {
-		node->child1 = loop();
-		OnExitParseMethod("stat 5");
-		return node;
-	}
-	else if (tk->type == tkID) {
-		node->child1 = assign();
-		OnExitParseMethod("stat 6");
-		return node;
-	}
-	else {
-		printf("ERROR: expect either tkKeywordREAD, tkKeywordPRINT, tkSTART, Iftk, tkKeywordREPEAT, or tkID. ");
-		printf("But received %s on line #%d \n", tk->str.c_str(), tk->lineNum);
-		return 0;//exit(1);
-	}
-}
-
-Node * mStat() {
-	OnEnterParseMethod("mStat");
-	Node *node = getNode(mStatNode);
-	if (tk->type == tkKeywordREAD || tk->type == tkKeywordPRINT || tk->type == tkSTART
-		|| tk->type == tkKeywordIF || tk->type == tkKeywordREPEAT || tk->type == tkID) {
-		node->child1 = stat();
-		node->child2 = mStat();
-		OnExitParseMethod("mStat 1");
-		return node;
-	}
-	else {
-		OnExitParseMethod("mStat 2");
-		return node; // predict <mStat> --> empty
-	}
-}
-
-Node * in() {
-	OnEnterParseMethod("in");
-	Node *node = getNode(inNode);
-	if (tk->type == tkKeywordREAD) {
-		//insertToken(node, tk);
-		tk = Scan(fP);
-		if (tk->type == tkID) {
-			insertToken(node, tk);
-			//node->token = tk;
-			tk = Scan(fP);
-			if (tk->type == tkDelimiterDOT) {
-				//insertToken(node, tk);
-				tk = Scan(fP);
-				OnExitParseMethod("in");
-				return node;
-			}
-			else {
-				ErrorTokenExceptation("in", tkDelimiterDOT, tk);
-				return 0;//exit(1);
-			}
-		}
-		else {
-			ErrorTokenExceptation("in", tkID, tk);
-			return 0;//exit(1);
-		}
-	}
-	else {
-		ErrorTokenExceptation("in", tkKeywordREAD, tk);
-		return 0;//exit(1);
-	}
-}
-
-Node * expr();
-Node * out() {
-	OnEnterParseMethod("out");
-	Node *node = getNode(outNode);
-	if (tk->type == tkKeywordPRINT) {
-		//insertToken(node, tk);
-		tk = Scan(fP);
-		node->child1 = expr();
-		if (tk->type == tkDelimiterDOT) {
-			//insertToken(node, tk);
-			tk = Scan(fP);
-			OnExitParseMethod("out");
-			return node;
-		}
-		else {
-			ErrorTokenExceptation("out", tkDelimiterDOT, tk);
-			return 0;//exit(1);
-		}
-	}
-	else {
-		ErrorTokenExceptation("out", tkKeywordPRINT, tk);
-		return 0;//exit(1);
-	}
-}
-
-Node * t();
-Node * expr() {
-	OnEnterParseMethod("expr");
-	Node *node = getNode(exprNode);
-	node->child1 = t();
-	if (tk->type == tkOperatorMUL) {
-		tk = Scan(fP);
-		node->child2 = expr();
-		OnExitParseMethod("expr 1");
-		return node;
-	}
-	else if (tk->type == tkOperatorDIV) {
-		tk = Scan(fP);
-		node->child2 = expr();
-		OnExitParseMethod("expr 2");
-		return node;
-	}
-	else {
-		OnExitParseMethod("expr 3");
-		return node; // predict empty after <T>
-	}
-}
-
-Node * f();
-Node * t() {
-	OnEnterParseMethod("t");
-	Node *node = getNode(tNode);
-	node->child1 = f();
-	if (tk->type == tkOperatorADD) {
-		tk = Scan(fP);
-		node->child2 = t();
-		OnExitParseMethod("t 1");
-		return node;
-	}
-	else if (tk->type == tkOperatorSUBTRACT) {
-		tk = Scan(fP);
-		node->child2 = t();
-		OnExitParseMethod("t 2");
-		return node;
-	}
-	else {
-		OnExitParseMethod("t 3");
-		return node; // predict empty after <F>
-	}
-}
-
-Node * r();
-Node * f() {
-	OnEnterParseMethod("f");
-	Node *node = getNode(fNode);
-	if (tk->type == tkOperatorSUBTRACT) {
-		insertToken(node, tk);
-		tk = Scan(fP);
-		node->child1 = f();
-		OnExitParseMethod("f 1");
-		return node;
-	}
-	else {
-		node->child1 = r();
-		OnExitParseMethod("f 2");
-		return node;
-	}
-}
-
-Node * r() {
-	OnEnterParseMethod("r");
-	Node *node = getNode(rNode);
-	if (tk->type == tkDelimiterLEFT_PA) {
-		insertToken(node, tk);
-		tk = Scan(fP);
-		node->child1 = expr();
-		if (tk->type == tkDelimiterRIGHT_PA) {
-			insertToken(node, tk);
-			tk = Scan(fP);
-			OnExitParseMethod("r 1");
-			return node;
-		}
-		else {
-			ErrorTokenExceptation("r", tkDelimiterRIGHT_PA, tk);
-			return 0;//exit(1);
-		}
-	}
-	else if (tk->type == tkID) {
-		insertToken(node, tk);
-		tk = Scan(fP);
-		OnExitParseMethod("r 2");
-		return node;
-	}
-	else if (tk->type == tkNUMBER) {
-		insertToken(node, tk);
-		//node->token = tk;
-		tk = Scan(fP);
-		OnExitParseMethod("r 3");
-		return node;
-	}
-	else {
-		printf("ERROR: expect either tkDelimiterLEFT_PA, or tkID, or tkNUMBER. ");
-		printf("But received %s on line #%d \n", tk->str.c_str(), tk->lineNum);
-		return 0;//exit(1);
-	}
-}
-
-/*------ for re-written grammar ------*/
-void y() {
-	OnEnterParseMethod("y");
-	if (tk->type == tkOperatorADD) {
-		tk = Scan(fP);
-		t();
-		OnExitParseMethod("y 1");
-		return;
-	}
-	else if (tk->type == tkOperatorSUBTRACT) {
-		tk = Scan(fP);
-		t();
-		OnExitParseMethod("y 2");
-		return;
-	}
-	else {
-		OnExitParseMethod("y 3");
-		return; // predict <Y> --> empty	
-	}
-}
-
-void x() {
-	OnEnterParseMethod("x");
-	if (tk->type == tkOperatorMUL) {
-		tk = Scan(fP);
-		expr();
-		OnExitParseMethod("x 1");
-		return;
-	}
-	else if (tk->type == tkOperatorDIV) {
-		tk = Scan(fP);
-		expr();
-		OnExitParseMethod("x 2");
-		return;
-	}
-	else {
-		OnExitParseMethod("x 3");
-		return; // predict <X> --> empty
-	}
-}
-/*------ /for re-written grammar ------*/
-
-Node * ro();
-Node * ifTk() {
-	OnEnterParseMethod("ifTk");
-	Node *node = getNode(ifNode);
-	if (tk->type == tkKeywordIF) {
-		//insertToken(node, tk);
-		tk = Scan(fP);
-		if (tk->type == tkDelimiterLEFT_BRACKET) {
-			tk = Scan(fP);
-			node->child1 = expr();
-			node->child2 = ro();
-			node->child3 = expr();
-			if (tk->type == tkDelimiterRIGHT_BRACKET) {
-				tk = Scan(fP);
-				node->child4 = block();
-				OnExitParseMethod("ifTK 1");
-				return node;
-			}
-			else {
-				ErrorTokenExceptation("ifTk", tkDelimiterRIGHT_BRACKET, tk);
-				return 0;//exit(1);
-			}
-		}
-		else {
-			ErrorTokenExceptation("ifTk", tkDelimiterLEFT_BRACKET, tk);
-			return 0;//exit(1);
-		}
-	}
-	else {
-		ErrorTokenExceptation("ifTk", tkKeywordIF, tk);
-		return 0;//exit(1);
-	}
-}
-
-Node * ro() {
-	OnEnterParseMethod("ro");
-	Node *node = getNode(roNode);
-	if (tk->type == tkOperatorLESS_EQUAL) {
-		insertToken(node, tk);
-		tk = Scan(fP);
-		OnExitParseMethod("ro 1");
-		return node;
-	}
-	else if (tk->type == tkOperatorGREATER_EQUAL) {
-		insertToken(node, tk);
-		tk = Scan(fP);
-		OnExitParseMethod("ro 2");
-		return node;
-	}
-	else if (tk->type == tkOperatorEQUAL) {
-		insertToken(node, tk);
-		tk = Scan(fP);
-		OnExitParseMethod("ro 3");
-		return node;
-	}
-	else if (tk->type == tkOperatorGREATER) {
-		insertToken(node, tk);
-		tk = Scan(fP);
-		OnExitParseMethod("ro 4");
-		return node;
-	}
-	else if (tk->type == tkOperatorLESS) {
-		insertToken(node, tk);
-		tk = Scan(fP);
-		OnExitParseMethod("ro 5");
-		return node;
-	}
-	else if (tk->type == tkOperatorDIFF) {
-		insertToken(node, tk);
-		tk = Scan(fP);
-		OnExitParseMethod("ro 6");
-		return node;
-	}
-	else if (tk->type == tkOperatorNOT_EQUAL) {
-		insertToken(node, tk);
-		tk = Scan(fP);
-		OnExitParseMethod("ro 7");
-		return node;
-	}
-	else {
-		printf("ERROR: expect relational operator, but received %s on line #%d \n",
-			tk->str.c_str(), tk->lineNum);
-		return 0;//exit(1);
-	}
-}
-
-Node * assign() {
-	OnEnterParseMethod("assign");
-	Node *node = getNode(assignNode);
-
-	if (tk->type == tkID) {
-		insertToken(node, tk);
-		//node->token = tk;
-		tk = Scan(fP);
-		if (tk->type == tkOperatorASSIGN) {
-			//insertToken(node, tk);
-			tk = Scan(fP);
-			expr();
-			if (tk->type == tkDelimiterDOT) {
-				insertToken(node, tk);
-				tk = Scan(fP);
-				OnExitParseMethod("assign ");
-				return node;
-			}
-			else {
-				ErrorTokenExceptation("assign", tkDelimiterDOT, tk);
-				return 0;//exit(1);
-			}
-		}
-		else {
-			ErrorTokenExceptation("assign", tkOperatorASSIGN, tk);
-			return 0;//exit(1);
-		}
-	}
-	else {
-		ErrorTokenExceptation("assign", tkID, tk);
-		return 0;//exit(1);
-	}
-}
-
-
-Node * loop() {
-	OnEnterParseMethod("loop");
-	Node *node = getNode(loopNode);
-	if (tk->type == tkKeywordREPEAT) {
-		//insertToken(node, tk);
-		tk = Scan(fP);
-		if (tk->type == tkDelimiterLEFT_BRACKET) {
-			tk = Scan(fP);
-			node->child1 = expr();
-			node->child2 = ro();
-			node->child3 = expr();
-			if (tk->type == tkDelimiterRIGHT_BRACKET) {
-				tk = Scan(fP);
-				node->child4 = block();
-				OnExitParseMethod("loop");
-				return node;
-			}
-			else {
-				ErrorTokenExceptation("loop", tkDelimiterRIGHT_BRACKET, tk);
-				return 0;//exit(1);
-			}
-		}
-		else {
-			ErrorTokenExceptation("loop", tkDelimiterLEFT_BRACKET, tk);
-			return 0;//exit(1);
-		}
-	}
-	else {
-		ErrorTokenExceptation("loop", tkKeywordREPEAT, tk);
-		return 0;//exit(1);
-	}
-}
-
-
-/*---------------TREE---------------*/
 
 // Hard-code to map with enum NodeType declared in Parse.h 
 char *nodeTypeStrArr[] = {
-	"program", "block", "var", "mvars", "expr", "x", "t", "y", "f", "r",
-	"stats", "mStat", "stat", "in", "out", "if", "loop", "assign", "ro"
+	"Program",
+	"Literal",
+	"BooleanLiteral",
+	"Type",
+
+	// EXPRESSIONS
+	"PrimaryExpression",
+	"Expression",
+	"AssignmentExpression",
+	"MultiplicativeExpression",
+	"AdditiveExpression",
+	"ShiftExpression",
+	"RelationalExpression",
+	"EqualityExpression",
+	"AndExpression",
+	"ExclusiveOrExpression",
+	"InclusiveOrExpression",
+	"LogicalAndExpression",
+	"LogicalOrExpression",
+	"ConditionalExpression",
+	"AssignmentOperator",
+	// !EXPRESSIONS
+
+	// STATEMENTS
+	"StatementBlock",
+	"StatementSeq",
+	"Statement",
+	"LabeledStatement",
+	"ExpressionStatement",
+	"SelectionStatement",
+	"DeclaretionStatement",
+	"DeclaretionStatementList",
+	// !STATEMENTS
+
+	"DeclaretionGlobalSeq"
 };
 
 
 void printParseTree(Node *root, int level) {
-	if (root == NULL) return;
+	if (root == 0) return;
 	printf("%*s" "%d <%s> ", level * 4, "", level, nodeTypeStrArr[root->nodeType]);
 	// printf("%*s" "%s ", level * 4, "", nodeTypeStrArr[root->nodeType]);
 	/*
@@ -620,56 +109,22 @@ void printParseTree(Node *root, int level) {
 
 }
 
-// Mark the new node by its type
-Node* getNode(NodeType nodeType) {
-	Node *node = new Node();
-	//Node *node;
-	//node = &nNode;//(Node *)malloc(sizeof(Node));
 
-	node->nodeType = nodeType;
-	Token someDefToken ("SHIET", tkNA, -2);
-	/*
-	node->tokenPtr->push_back(someDefToken);
-	node->tokenPtr->push_back(someDefToken);
-	node->tokenPtr->push_back(someDefToken);
-	node->tokenPtr->push_back(someDefToken);*/
-	node->child1 = node->child2 = node->child3 = node->child4 = NULL;
-
-	return node;
-}
-
-Token *getTokenPtr(Token *tk) {
-	Token *tokenPtr = new Token(tk->str, tk->type, tk->lineNum);//(Token *)malloc(sizeof(Token));
+Token *getTokenPtr(Token *_tk) {
+	Token *tokenPtr = new Token(_tk->str, _tk->type, _tk->lineNum);//(Token *)malloc(sizeof(Token));
 	return tokenPtr;
 }
 
-// Insert new token at the end of the linked-list of tokens 
-void insertToken(Node *node, Token *tk) {
-	Token *newToken = new Token(tk->str, tk->type, tk->lineNum);// getTokenPtr(tk);
-	/*printf("\n\n");
-	printToken(newToken);
-	printf("\n\n");*/
-	node->tokenPtr->push_back(*newToken);
-	/*if (node->tokenPtr == NULL) {
-		node->tokenPtr = newToken;
-	}
-	else {
-		printf("here %s", node->tokenPtr->str.c_str());
-		Token *tmp = node->tokenPtr;
-		int c = 0;
-		printf("gere %d\n", c++);
-		while (tmp->next != NULL) {
-			printf("gere %d\n", c++);
-			tmp = tmp->next;
-		}
-		tmp->next = newToken;
-	}*/
-}
 
 
 void ErrorTokenExceptation(std::string context, TokenType except, Token *recieved) {
 	std::string tokenTypeName = GetStringByTokenType(except);
 	printf("ERROR[%s]: expect '%s', but received '%s' on line #%d \n", context.c_str(), tokenTypeName.c_str(), tk->str.c_str(), tk->lineNum);
+}
+
+void ErrorNodeExpectation(std::string context, NodeType expect)
+{
+	printf("ERROR[%s]: expect '%s', but received '%s' on line #%d \n", context.c_str(), nodeTypeStrArr[expect]);
 }
 
 int curMethodLevel = 0;
@@ -697,3 +152,767 @@ void OnExitParseMethod(std::string context)
 }
 
 /*---------------/TREE---------------*/
+
+bool Program(Token * _tk, Node *& outNode)
+{
+	OnEnterParseMethod("Program");
+	tk = _tk;
+	outNode = new Node(nodeProgram);
+	DeclaretionGlobalSeq(_tk, outNode->child1);
+	if (tk->type != tkKeywordVOID || !(tk = tk->next)->str._Equal("Main") || (tk = tk->next)->type != tkDelimiterLEFT_PA || (tk = tk->next)->type != tkDelimiterRIGHT_PA) {
+		ErrorTokenExceptation("Program", tkKeywordVOID, tk);
+		OnExitParseMethod("Program 1"); return false;
+	}
+	Next();
+	bool b1 = StatementBlock(tk, outNode->child2);
+	OnExitParseMethod("Program 2"); return b1;
+}
+
+bool Literal(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("Literal");
+	tk = _tk;
+	outNode = new Node(nodeLiteral);
+	if (_tk->type == tkNUMBER)
+	{
+		outNode->AddToken(_tk);
+		Next();
+		OnExitParseMethod("Literal 1"); return true;
+	}
+	OnExitParseMethod("Literal 2"); return BooleanLiteral(_tk, outNode->child1);
+}
+
+bool BooleanLiteral(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("BooleanLiteral");
+	outNode = new Node(nodeBooleanLiteral);
+	if (_tk->type == tkKeywordTRUE || _tk->type == tkKeywordFALSE)
+	{
+		outNode->AddToken(_tk);
+		tk = _tk->next;
+		OnExitParseMethod("BooleanLiteral 1"); return true;
+	}
+	OnExitParseMethod("BooleanLiteral 2"); return false;
+}
+
+bool Type(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("Type");
+	outNode = new Node(nodeType);
+	if (_tk->type == tkKeywordBOOL || _tk->type == tkKeywordINT)
+	{
+		outNode->AddToken(_tk);
+		tk = _tk->next;
+		OnExitParseMethod("Type 1"); return true;
+	}
+	OnExitParseMethod("Type 2"); return false;
+}
+
+bool PrimaryExpression(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("PrimaryExpression");
+	tk = _tk;
+	outNode = new Node(nodePrimaryExpression);
+	if (_tk->type == tkID)
+	{
+		Next();
+		OnExitParseMethod("PrimaryExpression 1"); return true;
+	}
+	if (Literal(_tk, outNode))
+	{
+		OnExitParseMethod("PrimaryExpression 2"); return true;
+	}
+	if (tk->type == tkDelimiterLEFT_PA)
+	{
+		Next();
+		if (Expression(tk, outNode->child1))
+		{
+			if (tk->type == tkDelimiterRIGHT_PA)
+			{
+				Next();
+				OnExitParseMethod("PrimaryExpression 3"); return true;
+			}
+			else
+			{
+				ErrorTokenExceptation("PrimaryExpression", tkDelimiterRIGHT_PA, tk);
+				OnExitParseMethod("PrimaryExpression 4");
+				return false;
+			}
+		}
+		OnExitParseMethod("PrimaryExpression 5");
+		return false;
+	}
+	OnExitParseMethod("PrimaryExpression 6"); return false;
+}
+
+bool Expression(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("Expression");
+	tk = _tk;
+	outNode = new Node(nodeExpression);
+	if (AssignmentExpression(tk, outNode->child1))
+	{
+		if (tk->type == tkDelimiterCOMMA)
+		{
+			Next();
+			if (Expression(tk, outNode->child2))
+			{
+				Next();
+				OnExitParseMethod("Expression 1"); return true;
+			}
+			printf("ERROR: found comma but no expression\n");
+			OnExitParseMethod("Expression 2"); return false;
+		}
+		OnExitParseMethod("Expression 3"); return true;
+	}
+	OnExitParseMethod("Expression 4"); return false;
+}
+
+bool AssignmentExpression(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("AssignmentExpression");
+	tk = _tk;
+	outNode = new Node(nodeAssignmentExpression);
+	if (ConditionalExpression(_tk, outNode->child1))
+	{
+		if (AssignmentOperator(tk, outNode->child2))
+		{
+			if (AssignmentExpression(tk, outNode->child3))
+			{
+				OnExitParseMethod("AssignmentExpression 2"); return true;
+			}
+			OnExitParseMethod("AssignmentExpression 3");
+			return false;
+		}
+		OnExitParseMethod("AssignmentExpression 4");
+		return true;
+	}
+	/*if (LogicalOrExpression(_tk, outNode->child1))
+	{
+		if (AssignmentOperator(tk, outNode->child2))
+		{
+			if (AssignmentExpression(tk, outNode->child3))
+			{
+				OnExitParseMethod("AssignmentExpression 2"); return true;
+			}
+			printf("Error AssignmentExpression 1\n");
+		}
+		printf("Error AssignmentExpression 2\n");
+	}*/
+	OnExitParseMethod("AssignmentExpression 5"); return false;
+}
+
+bool MultiplicativeExpression(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("MultiplicativeExpression");
+	tk = _tk;
+	outNode = new Node(nodeMultiplicativeExpression);
+	if (PrimaryExpression(_tk, outNode->child1))
+	{
+		if (tk->type == tkOperatorMUL || tk->type == tkOperatorDIV || tk->type == tkOperatorREMAINDER)
+		{
+			outNode->AddToken(tk);
+			Next();
+			if (PrimaryExpression(tk, outNode->child2))
+			{
+				OnExitParseMethod("MultiplicativeExpression 1"); return true;
+			}
+			else {
+				printf("ERROR MultiplicativeExpression 1\n");
+				OnExitParseMethod("MultiplicativeExpression 2"); return false;
+			}
+		}
+		OnExitParseMethod("MultiplicativeExpression 3"); return true;
+	}
+	OnExitParseMethod("MultiplicativeExpression 4"); return false;
+}
+
+bool AdditiveExpression(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("AdditiveExpression");
+	tk = _tk;
+	outNode = new Node(nodeAdditiveExpression);
+	if (MultiplicativeExpression(_tk, outNode->child1))
+	{
+		if (tk->type == tkOperatorADD || tk->type == tkOperatorSUBTRACT)
+		{
+			outNode->AddToken(tk);
+			Next();
+			if (MultiplicativeExpression(tk, outNode->child2))
+			{
+				OnExitParseMethod("AdditiveExpression 1"); return true;
+			}
+			else {
+				OnExitParseMethod("AdditiveExpression 2"); return false;
+				printf("ERROR AdditiveExpression 1\n");
+			}
+		}
+		OnExitParseMethod("AdditiveExpression 3"); return true;
+	}
+	OnExitParseMethod("AdditiveExpression 4"); return false;
+}
+
+bool ShiftExpression(Token * _tk, Node*& outNode)
+{
+	printf("DONT USE  ShiftExpression!!!\n");
+	OnExitParseMethod("ShiftExpression"); return false;
+	tk = _tk;
+	outNode = new Node(nodeAdditiveExpression);
+	if (PrimaryExpression(_tk, outNode->child1))
+	{
+		if (tk->type == tkOperatorADD || tk->type == tkOperatorSUBTRACT)
+		{
+			outNode->AddToken(tk);
+			Next();
+			if (MultiplicativeExpression(tk, outNode->child2))
+			{
+				OnExitParseMethod("ShiftExpression 1"); return true;
+			}
+			else {
+				OnExitParseMethod("ShiftExpression 2"); return false;
+				printf("ERROR AdditiveExpression 1\n");
+			}
+		}
+		OnExitParseMethod("ShiftExpression 3"); return true;
+	}
+	OnExitParseMethod("ShiftExpression 4"); return false;
+}
+
+bool RelationalExpression(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("RelationalExpression");
+	tk = _tk;
+	outNode = new Node(nodeRelationalExpression);
+	if (AdditiveExpression(_tk, outNode->child1))
+	{
+		if (tk->type == tkOperatorLESS || tk->type == tkOperatorGREATER || tk->type == tkOperatorLESS_EQUAL || tk->type == tkOperatorGREATER_EQUAL)
+		{
+			outNode->AddToken(tk);
+			Next();
+			if (AdditiveExpression(tk, outNode->child2))
+			{
+				OnExitParseMethod("RelationalExpression 1"); return true;
+			}
+			else {
+				OnExitParseMethod("RelationalExpression 2"); return false;
+				printf("ERROR RelationalExpression 1\n");
+			}
+		}
+		OnExitParseMethod("RelationalExpression 3"); return true;
+	}
+	OnExitParseMethod("RelationalExpression 4"); return false;
+}
+
+bool EqualityExpression(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("EqualityExpression");
+	tk = _tk;
+	outNode = new Node(nodeEqualityExpression);
+	if (RelationalExpression(_tk, outNode->child1))
+	{
+		if (tk->type == tkOperatorEQUAL || tk->type == tkOperatorNOT_EQUAL)
+		{
+			outNode->AddToken(tk);
+			Next();
+			if (RelationalExpression(tk, outNode->child2))
+			{
+				OnExitParseMethod("EqualityExpression 1"); return true;
+			}
+			else {
+				printf("ERROR EqualityExpression 1\n");
+				OnExitParseMethod("EqualityExpression 2"); return false;
+			}
+		}
+		OnExitParseMethod("EqualityExpression 3"); return true;
+	}
+	OnExitParseMethod("EqualityExpression 4"); return false;
+}
+
+bool AndExpression(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("AndExpression");
+	tk = _tk;
+	outNode = new Node(nodeAndExpression);
+	if (EqualityExpression(_tk, outNode->child1))
+	{
+		if (tk->type == tkOperatorAND)
+		{
+			outNode->AddToken(tk);
+			Next();
+			if (EqualityExpression(tk, outNode->child2))
+			{
+				OnExitParseMethod("AndExpression 1"); return true;
+			}
+			else {
+				OnExitParseMethod("AndExpression 2"); return false;
+				printf("ERROR EqualityExpression 1\n");
+			}
+		}
+		OnExitParseMethod("AndExpression 3"); return true;
+	}
+	OnExitParseMethod("AndExpression 4"); return false;
+}
+
+bool ExclusiveOrExpression(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("AndExpression");
+	tk = _tk;
+	outNode = new Node(nodeExclusiveOrExpression);
+	if (AndExpression(_tk, outNode->child1))
+	{
+		if (tk->type == tkOperatorXOR)
+		{
+			outNode->AddToken(tk);
+			Next();
+			if (AndExpression(tk, outNode->child2))
+			{
+				OnExitParseMethod("AndExpression 1"); return true;
+			}
+			else {
+				OnExitParseMethod(" AndExpression2"); return false;
+				printf("ERROR ExclusiveOrExpression 1\n");
+			}
+		}
+		OnExitParseMethod("AndExpression 3"); return true;
+	}
+	OnExitParseMethod("AndExpression 4"); return false;
+}
+
+bool InclusiveOrExpression(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("InclusiveOrExpression");
+	tk = _tk;
+	outNode = new Node(nodeInclusiveOrExpression);
+	if (ExclusiveOrExpression(_tk, outNode->child1))
+	{
+		if (tk->type == tkOperatorOR)
+		{
+			outNode->AddToken(tk);
+			Next();
+			if (ExclusiveOrExpression(tk, outNode->child2))
+			{
+				OnExitParseMethod("InclusiveOrExpression 1"); return true;
+			}
+			else {
+				OnExitParseMethod("InclusiveOrExpression 2"); return false;
+				printf("ERROR InclusiveOrExpression 1\n");
+			}
+		}
+		OnExitParseMethod("InclusiveOrExpression 3"); return true;
+	}
+	OnExitParseMethod("InclusiveOrExpression 4"); return false;
+}
+
+bool LogicalAndExpression(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("LogicalAndExpression");
+	tk = _tk;
+	outNode = new Node(nodeLogicalAndExpression);
+	if (InclusiveOrExpression(_tk, outNode->child1))
+	{
+		if (tk->type == tkOperatorLOGICAL_AND)
+		{
+			outNode->AddToken(tk);
+			Next();
+			if (InclusiveOrExpression(tk, outNode->child2))
+			{
+				OnExitParseMethod("LogicalAndExpression 1"); return true;
+			}
+			else {
+				OnExitParseMethod("LogicalAndExpression 2"); return false;
+				printf("ERROR LogicalAndExpression 1\n");
+			}
+		}
+		OnExitParseMethod("LogicalAndExpression 3"); return true;
+	}
+	OnExitParseMethod("LogicalAndExpression 4"); return false;
+}
+
+bool LogicalOrExpression(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("LogicalOrExpression");
+	tk = _tk;
+	outNode = new Node(nodeLogicalOrExpression);
+	if (LogicalAndExpression(_tk, outNode->child1))
+	{
+		if (tk->type == tkOperatorLOGICAL_OR)
+		{
+			outNode->AddToken(tk);
+			Next();
+			if (LogicalAndExpression(tk, outNode->child2))
+			{
+				OnExitParseMethod("LogicalOrExpression 1"); return true;
+			}
+			else {
+				OnExitParseMethod("LogicalOrExpression 2"); return false;
+				printf("ERROR LogicalOrExpression 1\n");
+			}
+		}
+		OnExitParseMethod("LogicalOrExpression 3"); return true;
+	}
+	OnExitParseMethod("LogicalOrExpression 4"); return false;
+}
+
+bool ConditionalExpression(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("ConditionalExpression");
+	tk = _tk;
+	outNode = new Node(nodeConditionalExpression);
+	if (LogicalOrExpression(_tk, outNode->child1))
+	{
+		if (tk->type == tkOperatorQUESTION_MARK)
+		{
+			outNode->AddToken(tk);
+			Next();
+			if (Expression(tk, outNode->child2))
+			{
+				if (tk->type == tkOperatorCOLON)
+				{
+					outNode->AddToken(tk);
+					Next();
+					if (AssignmentExpression(tk, outNode->child3))
+					{
+						OnExitParseMethod("ConditionalExpression 1"); return true;
+					}
+					else
+					{
+						printf("ERROR ConditionalExpression 0\n");
+						OnExitParseMethod("ConditionalExpression 2"); return false;
+					}
+				}
+				else
+				{
+					printf("ERROR ConditionalExpression 1\n");
+					OnExitParseMethod("ConditionalExpression 3"); return false;
+				}
+			}
+			else {
+				printf("ERROR ConditionalExpression 2\n");
+				OnExitParseMethod("ConditionalExpression 4"); return false;
+			}
+		}
+		OnExitParseMethod("ConditionalExpression 5"); return true;
+	}
+	OnExitParseMethod("ConditionalExpression 6"); return false;
+}
+
+bool AssignmentOperator(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("AssignmentOperator");
+	tk = _tk;
+	outNode = new Node(nodeAssignmentOperator);
+	if (tk->type == tkOperatorASSIGN ||
+		tk->type == tkOperatorADD_ASSIGN ||
+		tk->type == tkOperatorSUB_ASSIGN)
+	{
+		outNode->AddToken(tk);
+		Next();
+		OnExitParseMethod("AssignmentOperator 1"); return true;
+	}
+	//ErrorTokenExceptation("AssignmentOperator", tkOperatorASSIGN, tk);
+	OnExitParseMethod("AssignmentOperator 2"); return false;
+}
+
+bool StatementBlock(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("StatementBlock");
+	tk = _tk;
+	outNode = new Node(nodeStatementBlock);
+	if (tk->type == tkDelimiterLEFT_BRACE)
+	{
+		Next();
+		if (StatementSeq(tk, outNode->child1))
+		{
+			if (tk->type == tkDelimiterRIGHT_BRACE)
+			{
+				OnExitParseMethod("StatementBlock 1"); return true;
+			}
+			else
+			{
+				ErrorTokenExceptation("StatementBlock", tkDelimiterRIGHT_BRACE, tk);
+				printf("ERROR StatementBlock 1\n");
+				OnExitParseMethod("StatementBlock 2"); return false;
+			}
+		}
+		else
+		{
+			printf("ERROR StatementBlock, somethign wrong in statement sequence\n");
+			return false;
+		}
+	}
+	if (Statement(tk, outNode->child1))
+	{
+		OnExitParseMethod("StatementBlock 3"); return true;
+	}
+	printf("ERROR StatementBlock 3\n");
+	OnExitParseMethod("StatementBlock 4"); return false;
+}
+
+bool StatementSeq(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("StatementSeq");
+	tk = _tk;
+	outNode = new Node(nodeStatementSeq);
+	if (Statement(tk, outNode->child1))
+	{
+		Node* buf = 0;
+		if (StatementSeq(tk, buf)) {
+			outNode->child2 = buf;
+			OnExitParseMethod("StatementSeq 1"); return true;
+		}
+		printf("here is going ouy from StatementSeq, need to check\n");
+		OnExitParseMethod("StatementSeq 2"); return true;
+	}
+	OnExitParseMethod("StatementSeq 3"); return true;
+}
+
+bool Statement(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("Statement");
+	tk = _tk;
+	outNode = new Node(nodeStatement);
+	if (LabeledStatement(_tk, outNode->child1)) {
+		OnExitParseMethod("Statement found LabeledStatement"); return true;
+	}
+	if (ExpressionStatement(_tk, outNode->child1)) {
+		OnExitParseMethod("Statement fount ExpressionStatement"); return true;
+	}
+	if (SelectionStatement(_tk, outNode->child1)) {
+		OnExitParseMethod("Statement found SelectionStatement"); return true;
+	}
+	if (DeclaretionStatement(_tk, outNode->child1)) {
+		OnExitParseMethod("Statement found DeclaretionStatement"); return true;
+	}
+	outNode->child1 = 0;
+	if (_tk->type == tkKeywordBREAK)
+	{
+		if (_tk->next->type != tkDelimiterSEMICOLON)
+		{
+			ErrorTokenExceptation("Statement", tkKeywordBREAK, _tk->next); 
+			OnExitParseMethod("Statement found break but no ';'");
+			return false;
+		}
+		outNode->AddToken(_tk);
+		tk = _tk->next->next;
+		OnExitParseMethod("Statement found break;"); return true;
+	}
+	tk = _tk;
+	OnExitParseMethod("Statement nothing"); return false;
+}
+
+bool LabeledStatement(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("LabeledStatement");
+	tk = _tk;
+	outNode = new Node(nodeLabeledStatement);
+	if (tk->type == tkKeywordCASE)
+	{
+		outNode->AddToken(tk);
+		Next();
+		if (ConditionalExpression(tk, outNode->child1))
+		{
+			if (tk->type == tkOperatorCOLON)
+			{
+				Next();
+				if (StatementSeq(tk, outNode->child2))
+				{
+					OnExitParseMethod("LabeledStatement 1"); return true;
+				}
+				else
+				{
+					printf("ERROR LabeledStatement 1\n");
+					OnExitParseMethod("LabeledStatement 2"); return false;
+				}
+			}
+			else
+			{
+				ErrorTokenExceptation("LabeledStatement", tkOperatorCOLON, tk);
+				printf("ERROR LabeledStatement 2\n");
+				OnExitParseMethod("LabeledStatement 3"); return false;
+			}
+		}
+		else
+		{
+			printf("ERROR LabeledStatement 3\n");
+			OnExitParseMethod("LabeledStatement 4"); return false;
+		}
+	}
+	if (tk->type == tkKeywordDEFAULT)
+	{
+		outNode->AddToken(tk);
+		Next();
+		if (tk->type == tkOperatorCOLON)
+		{
+			Next();
+			if (StatementSeq(tk, outNode->child2))
+			{
+				OnExitParseMethod("LabeledStatement 5"); return true;
+			}
+			else
+			{
+				printf("ERROR LabeledStatement 4\n");
+				OnExitParseMethod("LabeledStatement 6"); return false;
+			}
+		}
+		else
+		{
+			ErrorTokenExceptation("LabeledStatement", tkOperatorCOLON, tk);
+			printf("ERROR LabeledStatement 5\n");
+			OnExitParseMethod("LabeledStatement 7"); return false;
+		}
+	}
+	OnExitParseMethod("LabeledStatement 8"); return false;
+}
+
+bool ExpressionStatement(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("ExpressionStatement");
+	tk = _tk;
+	outNode = new Node(nodeExpressionStatement);
+	if (Expression(tk, outNode->child1))
+	{
+		if (tk->type == tkDelimiterSEMICOLON)
+		{
+			Next();
+			OnExitParseMethod("ExpressionStatement 1"); return true;
+		}
+		ErrorTokenExceptation("ExpressionStatement", tkDelimiterSEMICOLON, tk);
+		OnExitParseMethod("ExpressionStatement 2"); return false;
+	}
+	OnExitParseMethod("ExpressionStatement 3"); return false;
+}
+
+bool SelectionStatement(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("SelectionStatement");
+	tk = _tk;
+	outNode = new Node(nodeSelectionStatement);
+	if (tk->type == tkKeywordIF)
+	{
+		Next();
+		if (tk->type != tkDelimiterLEFT_PA) {
+			ErrorTokenExceptation("SelectionStatement", tkDelimiterLEFT_PA, tk);
+			printf("ERROR SelectionStatement 1\n");
+			OnExitParseMethod("SelectionStatement 1"); return false;
+		}
+		Next();
+		if (!Expression(tk, outNode->child1))
+		{
+			printf("ERROR SelectionStatement 2: wait for expression\n");
+			OnExitParseMethod("SelectionStatement 2"); return false;
+		}
+		if (tk->type != tkDelimiterRIGHT_PA) {
+			ErrorTokenExceptation("SelectionStatement", tkDelimiterRIGHT_PA, tk);
+			printf("ERROR SelectionStatement 3\n");
+			OnExitParseMethod("SelectionStatement 3"); return false;
+		}
+		Next();
+		if (!StatementBlock(tk, outNode->child2))
+		{
+			printf("ERROR SelectionStatement 4\n");
+			OnExitParseMethod("SelectionStatement 4"); return false;
+		}
+		if (tk->type != tkKeywordELSE)
+			OnExitParseMethod("SelectionStatement 5"); return true;
+		Next();
+		if (!StatementBlock(tk, outNode->child2))
+		{
+			printf("ERROR SelectionStatement 5\n");
+			OnExitParseMethod("SelectionStatement 6"); return false;
+		}
+		OnExitParseMethod("SelectionStatement 7"); return true;
+	}
+	if (tk->type == tkKeywordSWITCH)
+	{
+		Next();
+		if (tk->type != tkDelimiterLEFT_PA) {
+			ErrorTokenExceptation("SelectionStatement", tkDelimiterLEFT_PA, tk);
+			printf("ERROR SelectionStatement 6\n");
+			OnExitParseMethod("SelectionStatement 8"); return false;
+		}
+		Next();
+		if (!Expression(tk, outNode->child1))
+		{
+			printf("ERROR SelectionStatement 7: wait for expression\n");
+			OnExitParseMethod("SelectionStatement 9"); return false;
+		}
+		if (tk->type != tkDelimiterRIGHT_PA) {
+			ErrorTokenExceptation("SelectionStatement", tkDelimiterRIGHT_PA, tk);
+			printf("ERROR SelectionStatement 8\n");
+			OnExitParseMethod("SelectionStatement 10"); return false;
+		}
+		if (!StatementBlock(tk, outNode->child2))
+		{
+			printf("ERROR SelectionStatement 9\n");
+			OnExitParseMethod("SelectionStatement 11"); return false;
+		}
+		OnExitParseMethod("SelectionStatement 12"); return true;
+	}
+	OnExitParseMethod("SelectionStatement 13"); return false;
+}
+
+bool DeclaretionStatement(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("DeclaretionStatement");
+	tk = _tk;
+	outNode = new Node(nodeDeclaretionStatement);
+	if (Type(tk, outNode->child1))
+	{
+		if (DeclaretionStatementList(tk, outNode->child2))
+		{
+			OnExitParseMethod("DeclaretionStatement 1"); return true;
+		}
+		else
+		{
+			printf("ERROR DeclaretionStatement 1\n");
+			OnExitParseMethod("DeclaretionStatement 2"); return false;
+		}
+	}
+	OnExitParseMethod("DeclaretionStatement 3"); return false;
+}
+
+bool DeclaretionStatementList(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("DeclaretionStatementList");
+	tk = _tk;
+	outNode = new Node(nodeDeclaretionStatementList);
+	if (tk->type != tkID)
+	{
+		ErrorTokenExceptation("DeclaretionStatementList", tkID, tk);
+		printf("ERROR DeclaretionStatementList 1\n");
+		OnExitParseMethod("DeclaretionStatementList 1"); return false;
+	}
+	outNode->AddToken(tk);
+	Next();
+	if (tk->type != tkDelimiterCOMMA)
+	{
+		OnExitParseMethod("DeclaretionStatementList 2"); return true;
+	}
+	Next();
+	if (!DeclaretionStatementList(tk, outNode->child2)) {
+		OnExitParseMethod("DeclaretionStatementList 3"); return false;
+	}
+	OnExitParseMethod("DeclaretionStatementList 4"); return true;
+}
+
+bool DeclaretionGlobalSeq(Token * _tk, Node*& outNode)
+{
+	OnEnterParseMethod("DeclaretionGlobalSeq");
+	tk = _tk;
+	outNode = new Node(nodeDeclaretionGlobalSeq);
+	if (DeclaretionStatement(tk, outNode->child1))
+	{
+		if (tk->type != tkDelimiterSEMICOLON) {
+			ErrorTokenExceptation("DeclaretionGlobalSeq", tkDelimiterSEMICOLON, tk);
+			printf("ERROR DeclaretionGlobalSeq 1\n");
+			OnExitParseMethod("DeclaretionGlobalSeq 1"); return false;
+		}
+		Next();
+		if (DeclaretionGlobalSeq(tk, outNode->child2)) {
+			OnExitParseMethod("DeclaretionGlobalSeq 2"); return true;
+		}
+		outNode->child2 = 0;
+		OnExitParseMethod("DeclaretionGlobalSeq 3"); return true;
+	}
+	OnExitParseMethod("DeclaretionGlobalSeq 4"); return false;
+}

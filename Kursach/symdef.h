@@ -15,16 +15,21 @@ std::vector<std::string> operators;
 std::vector<std::string> delimiters;
 
 std::vector<TokenType> keywordsTokens = {
-	tkKeywordTHEN, tkKeywordIF, tkKeywordREPEAT, tkKeywordINT, tkKeywordFLOAT,
-	tkKeywordDO, tkKeywordVOID, tkKeywordRETURN, tkKeywordELSE, tkSTART, tkFINISH, tkKeywordVAR, tkKeywordPRINT
+	tkKeywordIF, tkKeywordELSE, tkKeywordINT, tkKeywordBOOL, tkKeywordVOID, 
+	tkKeywordSWITCH, tkKeywordCASE, tkKeywordBREAK, tkKeywordDEFAULT, tkKeywordTRUE, tkKeywordFALSE
 };
 
 std::vector<TokenType> operatorsTokens = {
 	// Relational Operators (==  <  >  =!=    =>  =<)
 	tkOperatorEQUAL, tkOperatorGREATER, tkOperatorLESS, tkOperatorGREATER_EQUAL, tkOperatorLESS_EQUAL, tkOperatorNOT_EQUAL,
 
-	// Other operators (= :  +  -  *  / %)
-	tkOperatorASSIGN, tkOperatorCOLON, tkOperatorADD, tkOperatorSUBTRACT, tkOperatorMUL, tkOperatorDIV, tkOperatorREMAINDER, tkOperatorNOT_EQUAL
+	// Other operators (= :  +  -  *  / %  !=  ++  --  +=  -=)
+	tkOperatorASSIGN, tkOperatorCOLON, tkOperatorADD,
+	tkOperatorSUBTRACT, tkOperatorMUL, tkOperatorDIV,
+	tkOperatorREMAINDER, tkOperatorINC, tkOperatorDEC,
+	tkOperatorADD_ASSIGN, tkOperatorSUB_ASSIGN,
+	tkOperatorAND, tkOperatorOR, tkOperatorXOR,
+	tkOperatorLOGICAL_AND, tkOperatorLOGICAL_OR
 };
 
 std::vector<TokenType> delimitersTokens = {
@@ -38,19 +43,17 @@ std::map<TokenType, std::string> tokenToStringMap =
 	{tkEOF, "\n"},
 	{tkNA, "N/A token"},
 	// KEYWORDS
-	{ tkKeywordDO, "do"},
-	{ tkKeywordFLOAT, "float" },
 	{ tkKeywordIF, "if" },
-	{ tkKeywordINT, "int" },
-	{ tkKeywordREPEAT, "repeat" },
-	{ tkKeywordRETURN, "return" },
-	{ tkKeywordTHEN, "then" },
-	{ tkKeywordVOID, "void" },
 	{ tkKeywordELSE, "else" },
-	{ tkKeywordVAR, "var" },
-	{ tkSTART, "start"},
-	{ tkFINISH, "finish"},
-	{ tkKeywordPRINT, "print"},
+	{ tkKeywordINT, "int" },
+	{ tkKeywordBOOL, "bool" },
+	{ tkKeywordTRUE, "true" },
+	{ tkKeywordFALSE, "false" },
+	{ tkKeywordVOID, "void" },
+	{ tkKeywordSWITCH, "switch" },
+	{ tkKeywordCASE, "case" },
+	{ tkKeywordBREAK, "break" },
+	{ tkKeywordDEFAULT, "default" },
 
 
 	// OPERATORS
@@ -67,6 +70,16 @@ std::map<TokenType, std::string> tokenToStringMap =
 	{ tkOperatorMUL, "*" },
 	{ tkOperatorNOT_EQUAL, "!=" },
 	{ tkOperatorSUBTRACT, "-" },
+	{ tkOperatorINC, "++" },
+	{ tkOperatorDEC, "--" },
+	{ tkOperatorADD_ASSIGN, "+=" },
+	{ tkOperatorSUB_ASSIGN, "-=" },
+	{ tkOperatorAND, "&" },
+	{ tkOperatorOR, "|" },
+	{ tkOperatorXOR, "^" },
+	{ tkOperatorLOGICAL_AND, "&&" },
+	{ tkOperatorLOGICAL_OR, "||" },
+	{ tkOperatorQUESTION_MARK, "?" },
 
 	// DELIMITERS
 	{ tkDelimiterCOMMA, ","},

@@ -147,13 +147,17 @@
     </ClCompile>
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="scanner.cpp" />
+    <ClCompile Include="semanticsanalyzer.cpp" />
+    <ClCompile Include="translator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="parser.h" />
     <ClInclude Include="scanner.h" />
+    <ClInclude Include="semanticsanalyzer.h" />
     <ClInclude Include="strformat.h" />
     <ClInclude Include="symdef.h" />
     <ClInclude Include="token.h" />
+    <ClInclude Include="translator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

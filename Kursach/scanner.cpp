@@ -179,17 +179,17 @@ std::string GetStringByTokenType(const TokenType type) {
 	case tkID: result = "IDENTIFER"; break;
 	case tkNUMBER: result = "NUMBER"; break;
 
-	case tkKeywordTHEN: 	result = "then [KEYWORD]"; break;
 	case tkKeywordIF: 		result = "if [KEYWORD]"; break;
-	case tkKeywordREPEAT: 	result = "repeat [KEYWORD]"; break;
+	case tkKeywordELSE: result = "else [KEYWORD]"; break;
 	case tkKeywordINT: 	result = "int [KEYWORD]"; break;
-	case tkKeywordFLOAT: 	result = "float [KEYWORD]"; break;
-	case tkKeywordDO: 		result = "do [KEYWORD]"; break;
 	case tkKeywordVOID: 	result = "void [KEYWORD]"; break;
-	case tkKeywordRETURN: 	result = "return [KEYWORD]"; break;
-	case tkSTART: result = "start [KEYWORD]"; break;
-	case tkFINISH: result = "finish [KEYWORD]"; break;
-	case tkKeywordVAR: result = "var [KEYWORD]"; break;
+	case tkKeywordBOOL: result = "bool [KEYWORD]"; break;
+	case tkKeywordTRUE: result = "true [KEYWORD]"; break;
+	case tkKeywordFALSE: result = "false [KEYWORD]"; break;
+	case tkKeywordBREAK: result = "break [KEYWORD]"; break;
+	case tkKeywordSWITCH: result = "switch [KEYWORD]"; break;
+	case tkKeywordCASE: result = "case [KEYWORD]"; break;
+	case tkKeywordDEFAULT: result = "default [KEYWORD]"; break;
 
 	case tkDelimiterDOT: 	result = "dot [DELIMITER]"; break;
 	case tkDelimiterLEFT_PA: 	result = "left-parenthesis [DELIMITER]"; break;
@@ -208,6 +208,16 @@ std::string GetStringByTokenType(const TokenType type) {
 	case tkOperatorDIV: 		result = "division [OTHER OPERATOR]"; break;
 	case tkOperatorREMAINDER:	result = "remainder [OTHER OPERATOR]"; break;
 	case tkOperatorCOLON:	result = "colon [OTHER OPERATOR]"; break;
+	case tkOperatorINC: result = "increment [OTHER OPERATOR]"; break;
+	case tkOperatorDEC: result = "decrement [OTHER OPERATOR]"; break;
+	case tkOperatorADD_ASSIGN: result = "add assign [OTHER OPERATOR]"; break;
+	case tkOperatorSUB_ASSIGN: result = "substruct assign [OTHER OPERATOR]"; break;
+	case tkOperatorAND: result = "& [OTHER OPERATOR]"; break;
+	case tkOperatorOR: result = "| [OTHER OPERATOR]"; break;
+	case tkOperatorXOR: result = "^ [OTHER OPERATOR]"; break;
+	case tkOperatorLOGICAL_AND: result = "&& [OTHER OPERATOR]"; break;
+	case tkOperatorLOGICAL_OR: result = "|| [OTHER OPERATOR]"; break;
+	case tkOperatorQUESTION_MARK: result = "? [OTHER OPERATOR]"; break;
 
 	case tkOperatorEQUAL: 		result = "equal [RELATIONAL OPERATOR]"; break;
 	case tkOperatorNOT_EQUAL: 		result = "not equal [RELATIONAL OPERATOR]"; break;
@@ -216,7 +226,7 @@ std::string GetStringByTokenType(const TokenType type) {
 	case tkOperatorGREATER_EQUAL:	result = "greater or equal [RELATIONAL OPERATOR]"; break;
 	case tkOperatorLESS_EQUAL: 		result = "less than or equal [RELATIONAL OPERATOR]"; break;
 
-
+		printf("ERROR: scanner.cpp GetStringByTokenType");
 	default: result = "UNKNOWN";
 	}
 	return result;
