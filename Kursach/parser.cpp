@@ -1,6 +1,7 @@
 #include "token.h"
 #include "scanner.h"
 #include "parser.h"
+#include "nodeh.h"
 #include <istream>
 
 Token *tk = new  Token("N/A", tkNA, 0);
@@ -48,9 +49,7 @@ char *nodeTypeStrArr[] = {
 	"AssignmentExpression",
 	"MultiplicativeExpression",
 	"AdditiveExpression",
-	"ShiftExpression",
 	"RelationalExpression",
-	"EqualityExpression",
 	"AndExpression",
 	"ExclusiveOrExpression",
 	"InclusiveOrExpression",
@@ -93,7 +92,7 @@ void printParseTree(Node *root, int level) {
 			int lineN = root->tokenPtr->operator[](i).lineNum;
 			std::string str = root->tokenPtr->operator[](i).str;
 			std::string typeStr = GetStringByTokenType(root->tokenPtr->operator[](i).type);
-			printf("%s (%s, #%d)", str.c_str(), typeStr.c_str(), lineN);
+			printf("%s (%s, #%d)", str.c_str(), typeStr.c_str(), root->nodeType);
 			if (root->tokenPtr->size() - i > 1)
 				printf(", and ");
 		}
@@ -105,7 +104,7 @@ void printParseTree(Node *root, int level) {
 	printParseTree(root->child2, level + 1);
 	printParseTree(root->child3, level + 1);
 	printParseTree(root->child4, level + 1);
-	printf("%*s" "%d </%s>\n ", level * 4, "", level, nodeTypeStrArr[root->nodeType]);
+	//printf("%*s" "%d </%s>\n ", level * 4, "", level, nodeTypeStrArr[root->nodeType]);
 
 }
 
@@ -119,7 +118,7 @@ Token *getTokenPtr(Token *_tk) {
 
 void ErrorTokenExceptation(std::string context, TokenType except, Token *recieved) {
 	std::string tokenTypeName = GetStringByTokenType(except);
-	printf("ERROR[%s]: expect '%s', but received '%s' on line #%d \n", context.c_str(), tokenTypeName.c_str(), tk->str.c_str(), tk->lineNum);
+	printf("ERROR[%s]: expect '%s', but received '%s' at (%d,%d) \n", context.c_str(), tokenTypeName.c_str(), tk->str.c_str(), tk->lineNum, tk->rowNum);
 }
 
 void ErrorNodeExpectation(std::string context, NodeType expect)
@@ -147,7 +146,7 @@ void OnExitParseMethod(std::string context)
 	{
 		space.append("   ");
 	}
-	printf("%s %d </%s>, current token: '%s', type:'%s'\n", space.c_str(), curMethodLevel, context.c_str(), tk->str.c_str(), GetStringByTokenType(tk->type).c_str());
+	printf("%s %d </%s>, current token: '%s' (%d,%d), type:'%s'\n", space.c_str(), curMethodLevel, context.c_str(), tk->str.c_str(), tk->lineNum, tk->rowNum, GetStringByTokenType(tk->type).c_str());
 	curMethodLevel--;
 }
 
@@ -177,9 +176,11 @@ bool Literal(Token * _tk, Node*& outNode)
 	{
 		outNode->AddToken(_tk);
 		Next();
-		OnExitParseMethod("Literal 1"); return true;
+		OnExitParseMethod("Literal 1"); 
+		return true;
 	}
-	OnExitParseMethod("Literal 2"); return BooleanLiteral(_tk, outNode->child1);
+	OnExitParseMethod("Literal 2"); 
+	return BooleanLiteral(_tk, outNode->child1);
 }
 
 bool BooleanLiteral(Token * _tk, Node*& outNode)
@@ -213,12 +214,13 @@ bool PrimaryExpression(Token * _tk, Node*& outNode)
 	OnEnterParseMethod("PrimaryExpression");
 	tk = _tk;
 	outNode = new Node(nodePrimaryExpression);
-	if (_tk->type == tkID)
+	if (tk->type == tkID)
 	{
+		outNode->AddToken(_tk);
 		Next();
 		OnExitParseMethod("PrimaryExpression 1"); return true;
 	}
-	if (Literal(_tk, outNode))
+	if (Literal(_tk, outNode->child1))
 	{
 		OnExitParseMethod("PrimaryExpression 2"); return true;
 	}
@@ -252,7 +254,7 @@ bool Expression(Token * _tk, Node*& outNode)
 	outNode = new Node(nodeExpression);
 	if (AssignmentExpression(tk, outNode->child1))
 	{
-		if (tk->type == tkDelimiterCOMMA)
+		/*if (tk->type == tkDelimiterCOMMA)
 		{
 			Next();
 			if (Expression(tk, outNode->child2))
@@ -262,7 +264,7 @@ bool Expression(Token * _tk, Node*& outNode)
 			}
 			printf("ERROR: found comma but no expression\n");
 			OnExitParseMethod("Expression 2"); return false;
-		}
+		}*/
 		OnExitParseMethod("Expression 3"); return true;
 	}
 	OnExitParseMethod("Expression 4"); return false;
@@ -284,6 +286,7 @@ bool AssignmentExpression(Token * _tk, Node*& outNode)
 			OnExitParseMethod("AssignmentExpression 3");
 			return false;
 		}
+		outNode->child2 = 0;
 		OnExitParseMethod("AssignmentExpression 4");
 		return true;
 	}
@@ -352,32 +355,6 @@ bool AdditiveExpression(Token * _tk, Node*& outNode)
 	OnExitParseMethod("AdditiveExpression 4"); return false;
 }
 
-bool ShiftExpression(Token * _tk, Node*& outNode)
-{
-	printf("DONT USE  ShiftExpression!!!\n");
-	OnExitParseMethod("ShiftExpression"); return false;
-	tk = _tk;
-	outNode = new Node(nodeAdditiveExpression);
-	if (PrimaryExpression(_tk, outNode->child1))
-	{
-		if (tk->type == tkOperatorADD || tk->type == tkOperatorSUBTRACT)
-		{
-			outNode->AddToken(tk);
-			Next();
-			if (MultiplicativeExpression(tk, outNode->child2))
-			{
-				OnExitParseMethod("ShiftExpression 1"); return true;
-			}
-			else {
-				OnExitParseMethod("ShiftExpression 2"); return false;
-				printf("ERROR AdditiveExpression 1\n");
-			}
-		}
-		OnExitParseMethod("ShiftExpression 3"); return true;
-	}
-	OnExitParseMethod("ShiftExpression 4"); return false;
-}
-
 bool RelationalExpression(Token * _tk, Node*& outNode)
 {
 	OnEnterParseMethod("RelationalExpression");
@@ -385,7 +362,7 @@ bool RelationalExpression(Token * _tk, Node*& outNode)
 	outNode = new Node(nodeRelationalExpression);
 	if (AdditiveExpression(_tk, outNode->child1))
 	{
-		if (tk->type == tkOperatorLESS || tk->type == tkOperatorGREATER || tk->type == tkOperatorLESS_EQUAL || tk->type == tkOperatorGREATER_EQUAL)
+		if (tk->type == tkOperatorLESS || tk->type == tkOperatorGREATER || tk->type == tkOperatorLESS_EQUAL || tk->type == tkOperatorGREATER_EQUAL || tk->type == tkOperatorEQUAL || tk->type == tkOperatorNOT_EQUAL)
 		{
 			outNode->AddToken(tk);
 			Next();
@@ -403,49 +380,23 @@ bool RelationalExpression(Token * _tk, Node*& outNode)
 	OnExitParseMethod("RelationalExpression 4"); return false;
 }
 
-bool EqualityExpression(Token * _tk, Node*& outNode)
-{
-	OnEnterParseMethod("EqualityExpression");
-	tk = _tk;
-	outNode = new Node(nodeEqualityExpression);
-	if (RelationalExpression(_tk, outNode->child1))
-	{
-		if (tk->type == tkOperatorEQUAL || tk->type == tkOperatorNOT_EQUAL)
-		{
-			outNode->AddToken(tk);
-			Next();
-			if (RelationalExpression(tk, outNode->child2))
-			{
-				OnExitParseMethod("EqualityExpression 1"); return true;
-			}
-			else {
-				printf("ERROR EqualityExpression 1\n");
-				OnExitParseMethod("EqualityExpression 2"); return false;
-			}
-		}
-		OnExitParseMethod("EqualityExpression 3"); return true;
-	}
-	OnExitParseMethod("EqualityExpression 4"); return false;
-}
-
 bool AndExpression(Token * _tk, Node*& outNode)
 {
 	OnEnterParseMethod("AndExpression");
 	tk = _tk;
 	outNode = new Node(nodeAndExpression);
-	if (EqualityExpression(_tk, outNode->child1))
+	if (RelationalExpression(_tk, outNode->child1))
 	{
 		if (tk->type == tkOperatorAND)
 		{
 			outNode->AddToken(tk);
 			Next();
-			if (EqualityExpression(tk, outNode->child2))
+			if (RelationalExpression(tk, outNode->child2))
 			{
 				OnExitParseMethod("AndExpression 1"); return true;
 			}
 			else {
 				OnExitParseMethod("AndExpression 2"); return false;
-				printf("ERROR EqualityExpression 1\n");
 			}
 		}
 		OnExitParseMethod("AndExpression 3"); return true;
@@ -625,6 +576,7 @@ bool StatementBlock(Token * _tk, Node*& outNode)
 		{
 			if (tk->type == tkDelimiterRIGHT_BRACE)
 			{
+				Next();
 				OnExitParseMethod("StatementBlock 1"); return true;
 			}
 			else
@@ -660,9 +612,11 @@ bool StatementSeq(Token * _tk, Node*& outNode)
 			outNode->child2 = buf;
 			OnExitParseMethod("StatementSeq 1"); return true;
 		}
+		outNode->child2 = 0;
 		printf("here is going ouy from StatementSeq, need to check\n");
 		OnExitParseMethod("StatementSeq 2"); return true;
 	}
+	outNode->child1 = 0;
 	OnExitParseMethod("StatementSeq 3"); return true;
 }
 
@@ -684,16 +638,18 @@ bool Statement(Token * _tk, Node*& outNode)
 		OnExitParseMethod("Statement found DeclaretionStatement"); return true;
 	}
 	outNode->child1 = 0;
-	if (_tk->type == tkKeywordBREAK)
+	tk = _tk;
+	if (tk->type == tkKeywordBREAK)
 	{
-		if (_tk->next->type != tkDelimiterSEMICOLON)
+		Next();
+		if (tk->type != tkDelimiterSEMICOLON)
 		{
 			ErrorTokenExceptation("Statement", tkKeywordBREAK, _tk->next); 
 			OnExitParseMethod("Statement found break but no ';'");
 			return false;
 		}
 		outNode->AddToken(_tk);
-		tk = _tk->next->next;
+		Next();
 		OnExitParseMethod("Statement found break;"); return true;
 	}
 	tk = _tk;
@@ -789,6 +745,7 @@ bool SelectionStatement(Token * _tk, Node*& outNode)
 	outNode = new Node(nodeSelectionStatement);
 	if (tk->type == tkKeywordIF)
 	{
+		outNode->AddToken(tk);
 		Next();
 		if (tk->type != tkDelimiterLEFT_PA) {
 			ErrorTokenExceptation("SelectionStatement", tkDelimiterLEFT_PA, tk);
@@ -812,8 +769,9 @@ bool SelectionStatement(Token * _tk, Node*& outNode)
 			printf("ERROR SelectionStatement 4\n");
 			OnExitParseMethod("SelectionStatement 4"); return false;
 		}
-		if (tk->type != tkKeywordELSE)
+		if (tk->type != tkKeywordELSE) {
 			OnExitParseMethod("SelectionStatement 5"); return true;
+		}
 		Next();
 		if (!StatementBlock(tk, outNode->child2))
 		{
@@ -824,6 +782,7 @@ bool SelectionStatement(Token * _tk, Node*& outNode)
 	}
 	if (tk->type == tkKeywordSWITCH)
 	{
+		outNode->AddToken(tk);
 		Next();
 		if (tk->type != tkDelimiterLEFT_PA) {
 			ErrorTokenExceptation("SelectionStatement", tkDelimiterLEFT_PA, tk);
@@ -841,6 +800,7 @@ bool SelectionStatement(Token * _tk, Node*& outNode)
 			printf("ERROR SelectionStatement 8\n");
 			OnExitParseMethod("SelectionStatement 10"); return false;
 		}
+		Next();
 		if (!StatementBlock(tk, outNode->child2))
 		{
 			printf("ERROR SelectionStatement 9\n");
@@ -884,6 +844,11 @@ bool DeclaretionStatementList(Token * _tk, Node*& outNode)
 	}
 	outNode->AddToken(tk);
 	Next();
+	if (tk->type == tkOperatorASSIGN) {
+		Next();
+		if (!Literal(tk, outNode->child1))
+			return false;
+	}
 	if (tk->type != tkDelimiterCOMMA)
 	{
 		OnExitParseMethod("DeclaretionStatementList 2"); return true;

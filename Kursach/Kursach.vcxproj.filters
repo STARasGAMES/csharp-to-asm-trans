@@ -56,5 +56,11 @@
     <ClInclude Include="translator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="variableh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="nodeh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

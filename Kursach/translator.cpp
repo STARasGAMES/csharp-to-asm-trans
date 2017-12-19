@@ -1,6 +1,7 @@
 #include "translator.h"
 #include "parser.h"
 #include "token.h"
+#include "nodeh.h"
 #include "semanticsanalyzer.h"
 
 void Translate(std::ostringstream& s, Node*& rootNode)
@@ -18,7 +19,7 @@ void Translate(std::ostringstream& s, Node*& rootNode)
 	s << ".data\n";
 	for (const auto& pair : GetMapOfVars())
 	{
-		s << "variable" << pair.second.id << ' ';
+		s << "var_" << pair.second.str.c_str() << ' ';
 		switch (pair.second.type)
 		{
 		case vartBool:
@@ -41,6 +42,8 @@ void Translate(std::ostringstream& s, Node*& rootNode)
 	s << ".code\n";
 	s << "main :\n";
 
+	trans(s, rootNode);
+
 
 	s << "invoke ExitProcess, 0\n";
 	s << "end main\n";
@@ -48,6 +51,9 @@ void Translate(std::ostringstream& s, Node*& rootNode)
 
 void trans(std::ostringstream& s, Node*& rootNode)
 {
+
+
+
 	if (rootNode->child1 != 0)
 		trans(s, rootNode->child1);
 	if (rootNode->child2 != 0)

@@ -1,6 +1,22 @@
 
-int someint;
-bool somebool;
+int a = 3, b = 15;
 
 void Main() {
+	if (a < b && b > a)
+	{
+		a = 16;
+		switch(a)
+		{
+			case true:
+				b = 3;
+			break;
+			default:
+				b = 1;
+			break;
+		}
+	}
+	else
+	{
+		b = 12;
+	}
 }

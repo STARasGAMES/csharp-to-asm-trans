@@ -18,7 +18,7 @@ void InitScanner();
 
 Token *Scan(std::istream *);
 
-void printToken(Token*);
+void printToken(Token*&);
 
 TokenType GetTokenTypeByString(std::string &);
 std::string GetStringByTokenType(const TokenType);

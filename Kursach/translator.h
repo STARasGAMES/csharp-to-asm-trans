@@ -3,6 +3,7 @@
 
 #include <sstream>
 #include "parser.h"
+
 void Translate(std::ostringstream& s, Node*&);
 
 #endif // !TRANSLATOR_H

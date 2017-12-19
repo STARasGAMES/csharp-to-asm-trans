@@ -88,6 +88,7 @@ struct Token {
 		this->str = buf;
 		this->type = type;
 		this->lineNum = -1;
+		this->rowNum = -1;
 	}
 
 	Token()
@@ -96,11 +97,13 @@ struct Token {
 		this->str = buf;
 		this->type = tkNA;
 		this->lineNum = -1;
+		this->rowNum = -1;
 	}
 
 	std::string str;
 	TokenType type;
 	int lineNum;
+	int rowNum;
 
 	int id = -1;
 	Token *next = 0;

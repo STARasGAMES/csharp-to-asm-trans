@@ -5,20 +5,7 @@
 #include <string>
 #include <map>
 #include "parser.h"
-
-enum VariableType {
-	vartInt,
-	vartBool,
-	vartNA
-};
-
-struct Variable {
-	VariableType type = vartNA;
-	bool isInitialyzed;
-	std::string initValue;
-	std::string str;
-	int id = -1;
-};
+#include "variableh.h"
 
 std::map<std::string, Variable>& GetMapOfVars();
 
