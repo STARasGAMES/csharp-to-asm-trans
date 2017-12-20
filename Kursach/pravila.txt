@@ -27,69 +27,23 @@
 	<primary-expression>:
 		<literal>
 		ID
-		( <expression> )
-        <primary-expression> [ <expression> ]
-    
-        
-	<expression>:
-		<assignment-expression>
-		<assignment-expression> , <expression> 
+		( <assignment-expression> )
 		
 	<assignment-expression>:
-		<conditional-expression>
-		<logical-or-expression> <assignment-operator> <assignment-expression>
-		
-    <multiplicative-expression>:
-        <primary-expression>
-        <multiplicative-expression> * <primary-expression>
-        <multiplicative-expression> / <primary-expression>
-        <multiplicative-expression> % <primary-expression>
-
-    <additive-expression>:
-        <multiplicative-expression>
-        <additive-expression> + <multiplicative-expression>
-        <additive-expression> - <multiplicative-expression>
-
-    <shift-expression>:
-        <additive-expression>
-        <shift-expression> << <additive-expression>
-        <shift-expression> >> <additive-expression>
+		ID = NUMBER | ID
 		
     <relational-expression>:
-        <shift-expression>
-        <relational-expression> < <shift-expression>
-        <relational-expression> > <shift-expression>
-        <relational-expression> <= <shift-expression>
-        <relational-expression> >= <shift-expression>
+        <primary-expression> < <primary-expression>
+        <primary-expression> > <primary-expression>
+        <primary-expression> <= <primary-expression>
+        <primary-expression> >= <primary-expression>
+        <primary-expression> == <primary-expression>
+        <primary-expression> != <primary-expression>
 		
-    <equality-expression>:
+    <logical-expression>:
         <relational-expression>
-        <equality-expression> == <relational-expression>
-        <equality-expression> != <relational-expression>
-		
-    <and-expression>:
-        <equality-expression>
-        <and-expression> & <equality-expression>
-		
-    <exclusive-or-expression>:
-        <and-expression>
-        <exclusive-or-expression> ^ <and-expression>
-		
-    <inclusive-or-expression>:
-        <exclusive-or-expression>
-        <inclusive-or-expression> | <exclusive-or-expression>
-	
-    <logical-and-expression>:
-        <inclusive-or-expression>
-        <logical-and-expression> && <inclusive-or-expression>
-		
-	<logical-or-expression>:
-		<logical-and-expression>
-		<logical-or-expression> || <logical-and-expression>
-
-	<conditional-expression>:
-		<logical-or-expression>
-		<logical-or-expression> ? <expression> : <assignment-expression>
+        <relational-expression> && <logical-expression>
+        <relational-expression> || <logical-expression>
 			
 	<assignment-operator>: one of
 		=  *=  /=  %=   +=  -=  >>=  <<=  &=  ^=  |=
@@ -109,19 +63,18 @@
 		<expession-statement>
         <selection-statement>
 		<declaretion-statement>
-        break ;
 		
 	<labeled-statement>:
-		case <conditional-expression> : <statement-seq>
-		default : <statement-seq>
+		case NUMBER : <statement-seq> break ;
+		default : <statement-seq> break ;
         
 	<expession-statement>:
         <expression> ;
         
 	<selection-statement>:
-        if ( <expression> ) <statement-block>
-        if ( <expression> ) <statement-block> else <statement-block>
-        switch ( <expression> ) <statement-block>
+        if ( <relational-expression> ) <statement-block>
+        if ( <relational-expression> ) <statement-block> else <statement-block>
+        switch ( ID ) <statement-block>
     
     <declaretion-statement>:
         <type> <declaretion-statement-list>

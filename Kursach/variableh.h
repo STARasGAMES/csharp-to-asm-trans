@@ -15,5 +15,9 @@ struct Variable {
 	std::string initValue;
 	std::string str;
 	int id = -1;
+
+	std::string ToString() {
+		return "var_" + str;
+	}
 };
 #endif // !VARIABLEH_H

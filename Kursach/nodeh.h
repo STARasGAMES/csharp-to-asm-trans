@@ -15,18 +15,9 @@ typedef enum {
 
 	// EXPRESSIONS
 	nodePrimaryExpression,
-	nodeExpression,
 	nodeAssignmentExpression,
-	nodeMultiplicativeExpression,
-	nodeAdditiveExpression,
 	nodeRelationalExpression,
-	nodeAndExpression,
-	nodeExclusiveOrExpression,
-	nodeInclusiveOrExpression,
-	nodeLogicalAndExpression,
-	nodeLogicalOrExpression,
-	nodeConditionalExpression,
-	nodeAssignmentOperator,
+	nodeLogicalExpression,
 	// !EXPRESSIONS
 
 	// STATEMENTS
@@ -82,18 +73,9 @@ private:
 
 		// EXPRESSIONS
 		"PrimaryExpression",
-		"Expression",
 		"AssignmentExpression",
-		"MultiplicativeExpression",
-		"AdditiveExpression",
 		"RelationalExpression",
-		"AndExpression",
-		"ExclusiveOrExpression",
-		"InclusiveOrExpression",
-		"LogicalAndExpression",
-		"LogicalOrExpression",
-		"ConditionalExpression",
-		"AssignmentOperator",
+		"LogicalExpression",
 		// !EXPRESSIONS
 
 		// STATEMENTS

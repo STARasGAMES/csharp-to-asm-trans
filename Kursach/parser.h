@@ -24,18 +24,9 @@ bool Type(Token* _tk, Node*& outNode);
 
 // EXPRESSIONS
 bool PrimaryExpression(Token* _tk, Node*& outNode);
-bool Expression(Token* _tk, Node*& outNode);
 bool AssignmentExpression(Token* _tk, Node*& outNode);
-bool MultiplicativeExpression(Token* _tk, Node*& outNode);
-bool AdditiveExpression(Token* _tk, Node*& outNode);
 bool RelationalExpression(Token* _tk, Node*& outNode);
-bool AndExpression(Token* _tk, Node*& outNode);
-bool ExclusiveOrExpression(Token* _tk, Node*& outNode);
-bool InclusiveOrExpression(Token* _tk, Node*& outNode);
-bool LogicalAndExpression(Token* _tk, Node*& outNode);
-bool LogicalOrExpression(Token* _tk, Node*& outNode);
-bool ConditionalExpression(Token* _tk, Node*& outNode);
-bool AssignmentOperator(Token* _tk, Node*& outNode);
+bool LogicalExpression(Token* _tk, Node*& outNode);
 // !EXPRESSIONS
 
 // STATEMENTS

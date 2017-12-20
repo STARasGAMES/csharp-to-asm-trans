@@ -56,7 +56,6 @@ bool SemanticsAnalysis(Node *& rootNode)
 		newVar->type = curDeclaretionType;
 		newVar->isInitialyzed = false;
 		newVar->id = mapOfVars.size();
-		mapOfVars[str] = *newVar;
 		// if there is initialization
 		if (rootNode->child1 != 0) {
 			// Literal
@@ -68,6 +67,9 @@ bool SemanticsAnalysis(Node *& rootNode)
 						printf("declaration operands must have same type1. found %d, expect %d\n", vartInt, curDeclaretionType);
 						return false;
 					}
+					printf("init of INT\n");
+					newVar->isInitialyzed = true;
+					newVar->initValue = rootNode->child1->tokenPtr->at(0).str;
 				}
 				// BOOLEAN
 				else {
@@ -75,12 +77,16 @@ bool SemanticsAnalysis(Node *& rootNode)
 						printf("declaration operands must have same type2. found %d, expect %d\n", vartBool, curDeclaretionType);
 						return false;
 					}
+					printf("init of BOOL\n");
+					newVar->isInitialyzed = true;
+					newVar->initValue = (rootNode->child1->child1->tokenPtr->at(0).str._Equal("true") ? "1" : "0");
 				}
 			}
 			else {
 				printf("WTF nodeDeclaretionStatementList\n");
 			}
 		}
+		mapOfVars[str] = *newVar;
 		if (rootNode->child2 != 0) {
 			if (SemanticsAnalysis(rootNode->child2)) {
 				lvl--; return true;
@@ -121,16 +127,8 @@ bool SemanticsAnalysis(Node *& rootNode)
 		}
 		if (rootNode->tokenPtr->at(0).type == tkKeywordSWITCH)
 		{
-			if (rootNode->child1 == 0) {
-				return false;
-			}
-			// switch expression
-			bool res = SemanticsAnalysis(rootNode->child1);
-			if (rootNode->child1->expRetValType == vartNA || res == false) {
-				printf("error: switch condition operand type is undefined\n");
-				return false;
-			}
-			if (!res || rootNode->child2 == 0) {
+			if (rootNode->child2 == 0) {
+				printf("HERE1");
 				return false;
 			}
 			// switch statement-block
@@ -152,7 +150,7 @@ bool SemanticsAnalysis(Node *& rootNode)
 					rootNode->expRetValType = mapOfVars[rootNode->tokenPtr->at(0).str].type;
 					lvl--; return true;
 				}
-				printf("variable %s is undefined\n", rootNode->tokenPtr->at(0).str.c_str());
+				printf("variable %s is undeclared\n", rootNode->tokenPtr->at(0).str.c_str());
 				return false;
 			}
 			printf("WTF nodePrimaryExpression\n");
@@ -179,49 +177,16 @@ bool SemanticsAnalysis(Node *& rootNode)
 		return false;
 	}
 
-	if (rootNode->nodeType == nodeExpression ||
-		rootNode->nodeType == nodeConditionalExpression ||
-		rootNode->nodeType == nodeInclusiveOrExpression ||
-		rootNode->nodeType == nodeExclusiveOrExpression ||
-		rootNode->nodeType == nodeAndExpression ||
-		rootNode->nodeType == nodeAdditiveExpression ||
-		rootNode->nodeType == nodeMultiplicativeExpression)
-	{
-		if (SemanticsAnalysis(rootNode->child1)) {
-			rootNode->expRetValType = rootNode->child1->expRetValType;
-			lvl--; return true;
-		}
-		printf("HERE2\n");
-		return false;
-	}
-
 	if (rootNode->nodeType == nodeAssignmentExpression) {
-		bool res = true;
-		res &= SemanticsAnalysis(rootNode->child1);
-		if (rootNode->child2 == 0) {
-			if (res) {
-				rootNode->expRetValType = rootNode->child1->expRetValType;
-				lvl--; return true;
-			}
+		if (mapOfVars.find(rootNode->tokenPtr->at(0).str) == mapOfVars.end()) {
+			printf("variable %s is undeclared\n", rootNode->tokenPtr->at(0).str.c_str());
 			return false;
 		}
-		res &= SemanticsAnalysis(rootNode->child2);
-		res &= SemanticsAnalysis(rootNode->child3);
-		switch (rootNode->child2->tokenPtr->at(0).type)
-		{
-		case tkOperatorASSIGN:
-			if (rootNode->child1->expRetValType != rootNode->child3->expRetValType) {
-				printf("assigment operands must have the same type. found %d and %d\n", rootNode->child1->expRetValType, rootNode->child3->expRetValType);
-				return false;
-			}
-			lvl--; return true;
-			break;
-		default:
-			printf("nodeAssignmentExpression, not tkOperatorASSIGN \n");
+		if (rootNode->tokenPtr->at(0).type == tkID && mapOfVars.find(rootNode->tokenPtr->at(0).str) == mapOfVars.end()) {
+			printf("variable %s is undeclared\n", rootNode->tokenPtr->at(0).str.c_str());
 			return false;
-			break;
 		}
-		return false;
+		lvl--;  return true;
 	}
 
 	if (rootNode->nodeType == nodeRelationalExpression) {
@@ -235,7 +200,6 @@ bool SemanticsAnalysis(Node *& rootNode)
 				lvl--; return true;
 		}
 		if (!SemanticsAnalysis(rootNode->child2)) {
-			printf("HERE\n");
 			return false;
 		}
 		if (rootNode->child1->expRetValType == rootNode->child2->expRetValType) {
@@ -246,30 +210,7 @@ bool SemanticsAnalysis(Node *& rootNode)
 		return false;
 	}
 
-	if (rootNode->nodeType == nodeLogicalOrExpression)
-	{
-		bool res = true;
-		res &= SemanticsAnalysis(rootNode->child1);
-		if (rootNode->child2 == 0) {
-			if (res) {
-				rootNode->expRetValType = rootNode->child1->expRetValType;
-				lvl--; return true;
-			}
-			return false;
-		}
-		res &= SemanticsAnalysis(rootNode->child2);
-		if (res == false) {
-			return false;
-		}
-		if (rootNode->child1->expRetValType == rootNode->child2->expRetValType == vartBool) {
-			rootNode->expRetValType = vartBool;
-			lvl--; return true;
-		}
-		printf("logical or expression operands must have type of bool\n");
-		return false;
-	}
-
-	if (rootNode->nodeType == nodeLogicalAndExpression)
+	if (rootNode->nodeType == nodeLogicalExpression)
 	{
 		bool res = true;
 		res &= SemanticsAnalysis(rootNode->child1);
@@ -300,9 +241,9 @@ bool SemanticsAnalysis(Node *& rootNode)
 			}
 			return false;
 		}
-		if ((rootNode->tokenPtr->size() == 1) && rootNode->tokenPtr->at(0).type == tkKeywordBREAK) {
+		/*if ((rootNode->tokenPtr->size() == 1) && rootNode->tokenPtr->at(0).type == tkKeywordBREAK) {
 			lvl--; return true;
-		}
+		}*/
 		printf("empty statement\n");
 		lvl--; return true;
 	}

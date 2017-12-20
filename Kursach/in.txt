@@ -2,15 +2,34 @@
 int a = 3, b = 15;
 
 void Main() {
-	if (a < b && b > a)
+	a = b;
+	if (a < b)
 	{
-		a = 16;
-		switch(a)
+		int c = 7;
+		switch (a)
 		{
-			case true:
+			case 13:
 				b = 3;
 			break;
+			case 1:
+				switch(b){
+				case 3:
+					b = 4;
+				break;
+				}
+			break;
 			default:
+				if (c == 7){
+					b = 2;
+					switch(b){
+					case 15:
+						b = 6;
+					break;
+					default:
+						a = 4;
+					break;
+					}
+					}
 				b = 1;
 			break;
 		}
